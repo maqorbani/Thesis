@@ -1,0 +1,7 @@
+for F in *; do cd $F;./* ; cd ../; done
+
+for F in *; do cd $F; chmod +x ./*; cd ..;  done
+
+export PATH=$PATH:.:/usr/local/radiance/bin
+export RAYPATH=.:/usr/local/radiance/lib
+export MANPATH=$MANPATH:/usr/local/radiance/man
