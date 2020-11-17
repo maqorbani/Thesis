@@ -2,7 +2,7 @@ import os
 import shutil
 import concurrent.futures
 
-nCPU = 4  # Number of CPUs to split work to
+nCPU = 32  # Number of CPUs to split work to
 
 # os.chdir('Desktop/TheRender/')
 print('Current working dir is: ' + os.getcwd())
