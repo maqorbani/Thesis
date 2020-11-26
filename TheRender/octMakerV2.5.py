@@ -1,29 +1,32 @@
 import os
-# import subprocess
+import subprocess
 import shutil
 import concurrent.futures
 # import numpy as np
 
-nCPU = 4  # Number of CPUs to split work to
+nCPU = 1  # Number of CPUs to split work to
 
 # os.chdir('Desktop/TheRender/')
 print('Current working dir is: ' + os.getcwd())
 skies = os.listdir('Tehran_Mehrabad_IRN/')  # 4399
 # skies = skies[:3]  # To test a few number
-divisionCPU = len(skies) // nCPU
 
 # Omitting rendered skies from the list
 dirs = []
 
 for i in os.listdir('Octs/'):
-    if os.path.isdir('Octs/'+i):
-        if len(os.listdir('Octs/'+i)) != 2:
-            dirs.append(i)
-            shutil.rmtree('Octs/'+i)
-        else:
-            skies.remove('climateBasedSky@_'+i+'.sky')
+	if os.path.isdir('Octs/'+i):
+		if len(os.listdir('Octs/'+i)) != 2:
+			dirs.append(i)
+			shutil.rmtree('Octs/'+i)
+		else:
+			try:
+				skies.remove('climateBasedSky@_'+i+'.sky')
+			except ValueError:
+				print('Warning! x not in list')
 
-# print(skies)
+# print(skies) 
+divisionCPU = len(skies) // nCPU
 
 skyDict = {}
 for i in range(nCPU):
@@ -54,7 +57,7 @@ pfilt = pfilt.split()
 os.chdir('Octs')
 
 # Remove former dirs
-# for dir in os.listdir():
+# for dir in os.listdir():  
 #     if os.path.isdir(dir):
 #         shutil.rmtree(dir)
 
