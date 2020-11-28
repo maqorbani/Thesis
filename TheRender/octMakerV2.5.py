@@ -15,17 +15,17 @@ skies = os.listdir('Tehran_Mehrabad_IRN/')  # 4399
 dirs = []
 
 for i in os.listdir('Octs/'):
-	if os.path.isdir('Octs/'+i):
-		if len(os.listdir('Octs/'+i)) != 2:
-			dirs.append(i)
-			shutil.rmtree('Octs/'+i)
-		else:
-			try:
-				skies.remove('climateBasedSky@_'+i+'.sky')
-			except ValueError:
-				print('Warning! x not in list')
+    if os.path.isdir('Octs/'+i):
+        if len(os.listdir('Octs/'+i)) != 2:
+            dirs.append(i)
+            shutil.rmtree('Octs/'+i)
+        else:
+            try:
+                skies.remove('climateBasedSky@_'+i+'.sky')
+            except ValueError:
+                print('Warning! x not in list')
 
-# print(skies) 
+# print(skies)
 divisionCPU = len(skies) // nCPU
 
 skyDict = {}
@@ -57,7 +57,7 @@ pfilt = pfilt.split()
 os.chdir('Octs')
 
 # Remove former dirs
-# for dir in os.listdir():  
+# for dir in os.listdir():
 #     if os.path.isdir(dir):
 #         shutil.rmtree(dir)
 
