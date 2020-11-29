@@ -1,5 +1,4 @@
 import os
-import subprocess
 import shutil
 import concurrent.futures
 # import numpy as np
@@ -46,6 +45,8 @@ a = a.split()
 # read the rpict command from file
 with open('rpict.bat', 'r') as f:
     render = f.read()
+
+render = render.rstrip('\n')  # Remove the EOL if exists
 
 # read the pfilt command from file
 with open('pfilt.bat', 'r') as f:
