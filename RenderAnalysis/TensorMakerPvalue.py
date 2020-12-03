@@ -45,7 +45,8 @@ with concurrent.futures.ThreadPoolExecutor() as exec:
 os.chdir('../')
 # %%
 with open('badDirs.txt', 'w') as f:
-    [f.write(i + ',') for i in badDirs]
+    # [f.write(i + ',') for i in badDirs]
+    f.write(', '.join(badDirs))
 
 # %%
 with open('skyResearch/key.txt', 'r') as f:

@@ -1,0 +1,1 @@
+rpict -t 60 -vtv -vp 4.500 6.800 1.200  -vd 0.104 -0.995 0.000  -vu 0.000 0.000 1.000  -vh 110 -vv 77.57 -x 1280 -y 720 -ps 2 -pt 0.05 -pj 0.9 -dj 0.7 -ds 0.15 -dt 0.05 -dc 0.75 -dr 3 -dp 512 -st 0.15 -ab 4 -ad 2048 -as 1024 -ar 512 -aa 0.1 -lr 8 -lw 0.005 -e error.log thesisRoom11_5_IMG.oct > 
