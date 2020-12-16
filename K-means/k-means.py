@@ -91,8 +91,10 @@ def euclidean_distance(points, centroid):
 distances = euclidean_distance(sunData, kmeans.cluster_centers_)
 # %%
 selected = []
+# selected.append(['alt', 'azi', 'dire', 'dif', 'key'])
+
 for i in distances.values():
-    selected.append([alt[i[1]], azi[i[1]], dire[i[1]], dif[i[1]]])
+    selected.append([alt[i[1]], azi[i[1]], dire[i[1]], dif[i[1]], key[i[1]]])
 
 selected = np.array(selected)
 
@@ -123,3 +125,6 @@ for i in range(k):
     coincidental[:, i] = np.linalg.norm((center-center[i]), axis=1)
 
 (coincidental+np.eye(200)*coincidental.max()).min(axis=0)  # Gets dist matrix
+
+# %%
+np.savetxt('results.txt', selected, fmt='%s')
