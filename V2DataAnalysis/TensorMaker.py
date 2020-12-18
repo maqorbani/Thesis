@@ -1,5 +1,9 @@
+'''
+The results.txt extracted from the k-means step, should be placed in the root
+of this directory as an indicator of X samples.
+'''
 # %%
-import os
+# import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -43,4 +47,14 @@ def TensorMaker(indices):
     return tnsr
 
 
-data = TensorMaker(selKeys[:50])
+# %%
+train = TensorMaker(selKeys)
+
+# %%
+testList = list(range(4141))
+for i in selKeys:
+    testList.remove(i)
+
+test = TensorMaker(testList)
+# %%
+np.save('train.npy', train)
