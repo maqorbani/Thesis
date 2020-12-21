@@ -5,12 +5,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+from GPUtil import showUtilization as gpu_usage
 
 # from statistics import median
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epoch = 30
+batch = 10
 
 x_train = np.load("train.npy")
 x_test = np.load("test_random.npy")
@@ -18,10 +20,10 @@ x_test = np.load("test_random.npy")
 m = x_train.shape[0]
 # %%
 # Transforming the data into torch tensors.
-x_train, y_train = torch.tensor(x_train[:, :, :8]).to(device), \
-    torch.tensor(x_train[:, :, -1]).to(device)
-x_test, y_test = torch.tensor(x_test[:, :, :8]).to(device), \
-    torch.tensor(x_test[:, :, -1]).to(device)
+x_train, y_train = torch.tensor(x_train[:, :, :8]), \
+    torch.tensor(x_train[:, :, -1])
+x_test, y_test = torch.tensor(x_test[:, :, :8]), \
+    torch.tensor(x_test[:, :, -1])
 
 # %%
 
@@ -40,6 +42,8 @@ class Model(nn.Module):
         self.Out = nn.Linear(600, 1)
 
     def forward(self, x):
+        x = x.to(device)  # import the tensror to device
+
         # (26450, 1) the sunpatch images, reshaping for avoiding a size 1 array
         xA = x[:, 7].view(-1, 1)
         xA = F.relu(self.AAfc(xA))
@@ -50,17 +54,22 @@ class Model(nn.Module):
         xB = F.relu(self.BBfc3(xB))
         xB = F.relu(self.BBfc4(xB))
 
-        xC = torch.cat([xA, xB], dim=1)
-        xC = F.relu(self.CCfc(xC))
-        xC = F.relu(self.Out(xC))
+        xB = torch.cat([xA, xB], dim=1)
+        del xA
+        xB = F.relu(self.CCfc(xB))
+        xB = F.relu(self.Out(xB))
 
-        return xC
+        return xB
 
 
 # %%
-model = Model().to(device)
-print(model)
+model = Model()
+model.to(device)
 
+print(model)
+gpu_usage()
+
+# %%
 '''
 # Testing a tensor on the model
 out = model(x_train[3, :, :])
@@ -74,12 +83,20 @@ loss.backward()
 print(model.CCfc.weight.grad)
 '''
 # %%
-out = model(x_train[3, :, :])
-plt.imshow(out.to("cpu").detach().numpy().reshape(144, -1))
-plt.show()
+gpu_usage()
+with torch.no_grad():
+    out = model(x_train[3, :, :])
+    plt.imshow(out.to("cpu").numpy().reshape(144, -1))
+    plt.show()
 
-plt.imshow(y_train[3, :].to("cpu").reshape(144, -1))
+gpu_usage()
+
+plt.imshow(y_train[3, :].reshape(144, -1))
 plt.show()
+gpu_usage()
+
+torch.cuda.empty_cache()
+gpu_usage()
 
 # %%
 epochLoss = []
@@ -87,7 +104,7 @@ criterion = nn.MSELoss()
 testLoss = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.00003)
+optimizer = optim.Adam(model.parameters(), 0.0001)
 model.zero_grad()   # zero the gradient buffers
 
 epochPercent = 0  # Dummy variable, just for printing purposes
@@ -95,15 +112,19 @@ epochPercent = 0  # Dummy variable, just for printing purposes
 for i in range(epoch*m):
     target = y_train[i % m, :].reshape(-1, 1)
     x = x_train[i % m, :, :]
-    output = model(x)
+    output = model(x).cpu()
     loss = criterion(output, target)
     loss.backward()
-    optimizer.step()    # Does the update
+    # optimizer.step()    # Does the update
     epochLoss.append(loss.item())
     test_target = y_test[i % m, :].reshape(-1, 1)
     xTe = x_test[i % m, :, :]
-    output = model(xTe)
+    output = model(xTe).cpu()
     testLoss.append(criterion(output, test_target).item())
+
+    if i % batch == 10:
+        optimizer.step()
+        model.zero_grad()
 
     if (i + 1) * 10 // m == epochPercent + 1:
         print("#", end='')
@@ -112,14 +133,12 @@ for i in range(epoch*m):
         print('\n', "-->>Train>>", sum(epochLoss)/len(epochLoss))
         print("-->>Test>>", sum(testLoss)/len(testLoss))
 
-    model.zero_grad()   # zero the gradient buffers
+    # model.zero_grad()   # zero the gradient buffers
 
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.0001)
-model.zero_grad()   # zero the gradient buffers
-batch = 2
-
+'''
+# Some creative stuff here
 for i in range(int(epoch * m / batch)):
     mPrime = m + batch if (i+1)*batch % m == 0 else m
     target = y_train[(i*batch) % m:(i+1)*batch % mPrime, :].reshape(-1, 1)
@@ -133,16 +152,18 @@ for i in range(int(epoch * m / batch)):
     xTe = x_test[(i*batch) % m:(i+1)*batch % mPrime, :, :].reshape(-1, 8)
     output = model(xTe)
     testLoss.append(criterion(output, test_target).item())
-
+'''
 
 # %%
 plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
 plt.show()
 # %%
-number = 4
-out = model(x_test[number, :, :]).to("cpu").detach().numpy().reshape(144, -1)+0.01
-T = y_test[number, :].to("cpu").detach().numpy().reshape(144, -1)+0.01
+number = 17
+with torch.no_grad():
+    out = model(x_train[number, :, :]).to(
+        "cpu").numpy().reshape(144, -1)+0.01
+    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 

@@ -60,7 +60,7 @@ sunData = np.vstack((alt, azi, dire, dif)).T
 
 # %%
 # Run the K-means algorithm to cluster data into k groups.
-k = 200
+k = 250
 kmeans = KMeans(n_clusters=k, max_iter=9000).fit(sunData)
 
 # %%
@@ -126,7 +126,7 @@ center = kmeans.cluster_centers_
 for i in range(k):
     coincidental[:, i] = np.linalg.norm((center-center[i]), axis=1)
 
-(coincidental+np.eye(200)*coincidental.max()).min(axis=0)  # Gets dist matrix
+(coincidental+np.eye(k)*coincidental.max()).min(axis=0)  # Gets dist matrix
 
 # %%
-np.savetxt('results.txt', selectKeys, fmt='%s')
+np.savetxt('results250.txt', selectKeys, fmt='%s')

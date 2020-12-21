@@ -3,7 +3,7 @@ The results.txt extracted from the k-means step, should be placed in the root
 of this directory as an indicator of X samples.
 '''
 # %%
-# import os
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,6 +16,7 @@ key = np.loadtxt('key.txt', dtype='str')  # Hour of year for each key
 selKeys = np.loadtxt('results250.txt')  # K-means selected keys
 selKeys = [int(i) for i in selKeys]
 assert (len(alt) == len(azi) == len(dire) == len(dif) == len(key))
+TheTuple = (3.945, 0.0, 8.969, 0.06066)
 
 # %%
 
@@ -46,7 +47,8 @@ def TensorMaker(indices):
     tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
-    tnsr = minMaxScale(tnsr)
+    tnsr[:, :, :-2] = minMaxScale(tnsr[:, :, :-2])
+    tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
 
     return tnsr
 
@@ -57,6 +59,35 @@ def minMaxScale(tnsr):
             (tnsr[:, :, i].max() - tnsr[:, :, i].min())
 
     return tnsr
+
+
+def forceMinMax(tnsr, Tuples):
+    ab0MAX, ab0min, ab4MAX, ab4min = Tuples
+
+    tnsr[:, :, 0] = (tnsr[:, :, 0] - ab0min) / (ab0MAX - ab0min)
+    tnsr[:, :, 1] = (tnsr[:, :, 1] - ab4min) / (ab4MAX - ab4min)
+    return tnsr
+
+
+def minMaxFinder():
+    ab0MAX = 0
+    ab0min = 10000
+    for i in os.listdir('ab0'):
+        file = np.loadtxt(f'ab0/{i}/{i}.gz')
+        if file.max() > ab0MAX:
+            ab0MAX = file.max()
+        if file.min() < ab0min:
+            ab0min = file.min()
+    ab4MAX = 0
+    ab4min = 10000
+    for i in os.listdir('ab4'):
+        file = np.loadtxt(f'ab4/{i}/{i}.gz')
+        if file.max() > ab4MAX:
+            ab4MAX = file.max()
+        if file.min() < ab4min:
+            ab4min = file.min()
+
+        return ab0MAX, ab0min, ab4MAX, ab4min
 
 
 # %%
