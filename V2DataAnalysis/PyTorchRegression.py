@@ -1,0 +1,218 @@
+# %%
+import torch
+import torch.optim as optim
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+import matplotlib.pyplot as plt
+
+# from statistics import median
+
+# %%
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+epoch = 30
+
+x_train = np.load("train.npy")
+x_test = np.load("test_random.npy")
+
+m = x_train.shape[0]
+# %%
+# Transforming the data into torch tensors.
+x_train, y_train = torch.tensor(x_train[:, :, :8]).to(device), \
+    torch.tensor(x_train[:, :, -1]).to(device)
+x_test, y_test = torch.tensor(x_test[:, :, :8]).to(device), \
+    torch.tensor(x_test[:, :, -1]).to(device)
+
+# %%
+
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.AAfc = nn.Linear(1, 600)
+
+        self.BBfc1 = nn.Linear(7, 600)
+        self.BBfc2 = nn.Linear(600, 600)
+        self.BBfc3 = nn.Linear(600, 600)
+        self.BBfc4 = nn.Linear(600, 600)
+
+        self.CCfc = nn.Linear(1200, 600)
+        self.Out = nn.Linear(600, 1)
+
+    def forward(self, x):
+        # (26450, 1) the sunpatch images, reshaping for avoiding a size 1 array
+        xA = x[:, 7].view(-1, 1)
+        xA = F.relu(self.AAfc(xA))
+
+        xB = x[:, :7]  # (26450, 7) other than sunpatch
+        xB = F.relu(self.BBfc1(xB))
+        xB = F.relu(self.BBfc2(xB))
+        xB = F.relu(self.BBfc3(xB))
+        xB = F.relu(self.BBfc4(xB))
+
+        xC = torch.cat([xA, xB], dim=1)
+        xC = F.relu(self.CCfc(xC))
+        xC = F.relu(self.Out(xC))
+
+        return xC
+
+
+# %%
+model = Model().to(device)
+print(model)
+
+'''
+# Testing a tensor on the model
+out = model(x_train[3, :, :])
+# Setting the loss function
+criterion = nn.MSELoss()
+loss = criterion(out, y_train[3,:].reshape(-1, 1))
+print(loss)
+# Zeroing out the gradients
+model.zero_grad()
+loss.backward()
+print(model.CCfc.weight.grad)
+'''
+# %%
+out = model(x_train[3, :, :])
+plt.imshow(out.to("cpu").detach().numpy().reshape(144, -1))
+plt.show()
+
+plt.imshow(y_train[3, :].to("cpu").reshape(144, -1))
+plt.show()
+
+# %%
+epochLoss = []
+criterion = nn.MSELoss()
+testLoss = []
+
+# %%
+optimizer = optim.Adam(model.parameters(), 0.00003)
+model.zero_grad()   # zero the gradient buffers
+
+epochPercent = 0  # Dummy variable, just for printing purposes
+# Model.train model.eval >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+for i in range(epoch*m):
+    target = y_train[i % m, :].reshape(-1, 1)
+    x = x_train[i % m, :, :]
+    output = model(x)
+    loss = criterion(output, target)
+    loss.backward()
+    optimizer.step()    # Does the update
+    epochLoss.append(loss.item())
+    test_target = y_test[i % m, :].reshape(-1, 1)
+    xTe = x_test[i % m, :, :]
+    output = model(xTe)
+    testLoss.append(criterion(output, test_target).item())
+
+    if (i + 1) * 10 // m == epochPercent + 1:
+        print("#", end='')
+        epochPercent += 1
+    if (i + 1) % m == 0 and i != 0:
+        print('\n', "-->>Train>>", sum(epochLoss)/len(epochLoss))
+        print("-->>Test>>", sum(testLoss)/len(testLoss))
+
+    model.zero_grad()   # zero the gradient buffers
+
+
+# %%
+optimizer = optim.Adam(model.parameters(), 0.0001)
+model.zero_grad()   # zero the gradient buffers
+batch = 2
+
+for i in range(int(epoch * m / batch)):
+    mPrime = m + batch if (i+1)*batch % m == 0 else m
+    target = y_train[(i*batch) % m:(i+1)*batch % mPrime, :].reshape(-1, 1)
+    x = x_train[(i*batch) % m:(i+1)*batch % mPrime, :, :].reshape(-1, 8)
+    output = model(x)
+    loss = criterion(output, target)
+    loss.backward()
+    optimizer.step()    # Does the update
+    epochLoss.append(loss.item())
+    test_target = y_test[(i*batch) % m:(i+1)*batch % mPrime, :].reshape(-1, 1)
+    xTe = x_test[(i*batch) % m:(i+1)*batch % mPrime, :, :].reshape(-1, 8)
+    output = model(xTe)
+    testLoss.append(criterion(output, test_target).item())
+
+
+# %%
+plt.plot(np.log10(epochLoss))
+plt.plot(np.log10(testLoss))
+plt.show()
+# %%
+number = 4
+out = model(x_test[number, :, :]).to("cpu").detach().numpy().reshape(144, -1)+0.01
+T = y_test[number, :].to("cpu").detach().numpy().reshape(144, -1)+0.01
+# plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
+# plt.show()
+
+# Plotting both prediction and target images
+fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(40, 10))
+ax1.imshow(np.log10(out))
+ax1.title.set_text('y_hat')
+ax2.imshow(np.log10(T))
+ax2.title.set_text('ground_truth')
+ax3.imshow((out-T), vmax=0.2)
+ax3.title.set_text('difference')
+# plt.imshow((y_train[5, :].to("cpu").detach().numpy().reshape(144, -1))
+#            - (out.to("cpu").detach().numpy().reshape(144, -1)), vmax=0.67)
+plt.show()
+
+# %%
+fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(7, 10))
+ax1.hist((out).ravel())
+ax1.title.set_text('y_hat')
+ax2.hist((T).ravel())
+ax2.title.set_text('ground_truth')
+ax3.hist(np.abs(out-T).ravel())
+ax3.title.set_text('difference')
+
+plt.show()
+# %%
+# torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
+
+# %%
+model = torch.load("Model")
+
+# %%
+testLoss = []
+for i in range(y_test.size()[0]):
+    target = y_test[i, :].reshape(-1, 1)
+    x = x_test[i, :, :]
+    output = model(x)
+    testLoss.append(criterion(output, target).item())
+
+print(sum(testLoss)/len(testLoss))
+
+
+# %%
+
+
+def analyze_results(sample_num):
+    out = model(x_test[sample_num, :, :])
+    out = np.rot90(out.to("cpu").detach().numpy().reshape(230, -1))
+    fig = plt.figure(figsize=(15, 20))
+    fig.add_subplot(3, 1, 1)
+    plt.imshow(out, vmin=0, vmax=0.6)
+    plt.title("Predicted")
+    plt.colorbar()
+    fig.add_subplot(3, 1, 2)
+    target = np.rot90(y_test[sample_num, :].cpu().reshape(230, -1))
+    plt.imshow(target, vmin=0, vmax=0.6)
+    plt.title("Target")
+    plt.colorbar()
+    fig.add_subplot(3, 1, 3)
+    plt.imshow(target-out, vmin=0, vmax=0.6)
+    plt.title("difference")
+    plt.colorbar()
+    # plt.show()
+
+
+analyze_results(testLoss.index(min(testLoss)))
+sample_num = testLoss.index(min(testLoss))
+# %%
+out = model(x_train[sample_num, :, :])
+out = np.rot90(out.to("cpu").detach().numpy().reshape(230, -1))
+target = np.rot90(y_train[sample_num, :].cpu().reshape(230, -1))
+print(np.max(np.abs(out-target)))
+plt.imshow(np.abs(out-target))
