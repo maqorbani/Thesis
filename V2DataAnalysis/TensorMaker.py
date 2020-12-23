@@ -16,12 +16,19 @@ key = np.loadtxt('key.txt', dtype='str')  # Hour of year for each key
 selKeys = np.loadtxt('results250.txt')  # K-means selected keys
 selKeys = [int(i) for i in selKeys]
 assert (len(alt) == len(azi) == len(dire) == len(dif) == len(key))
-TheTuple = (3.945, 0.0, 8.969, 0.06066)
+
+with open('ab0/min-max.txt', 'r') as f:
+    ab0 = [float(i) for i in f.read().split(', ')]
+
+with open('ab4/min-max.txt', 'r') as f:
+    ab4 = [float(i) for i in f.read().split(', ')]
+
+TheTuple = ab0 + ab4
 
 # %%
 
 
-def TensorMaker(indices):
+def TensorMaker(indices, TheTuple):
     '''
     Creates the tensor ready for the DL model training and testing
     The images required for this function are 144 by 256 pixels
@@ -62,7 +69,7 @@ def minMaxScale(tnsr):
 
 
 def forceMinMax(tnsr, Tuples):
-    ab0MAX, ab0min, ab4MAX, ab4min = Tuples
+    ab0min, ab0MAX, ab4min, ab4MAX = Tuples
 
     tnsr[:, :, 0] = (tnsr[:, :, 0] - ab0min) / (ab0MAX - ab0min)
     tnsr[:, :, 1] = (tnsr[:, :, 1] - ab4min) / (ab4MAX - ab4min)
@@ -78,6 +85,7 @@ def minMaxFinder():
             ab0MAX = file.max()
         if file.min() < ab0min:
             ab0min = file.min()
+
     ab4MAX = 0
     ab4min = 10000
     for i in os.listdir('ab4'):
@@ -91,7 +99,7 @@ def minMaxFinder():
 
 
 # %%
-train = TensorMaker(selKeys)
+train = TensorMaker(selKeys, TheTuple)
 np.save('train.npy', train)
 
 # %%
@@ -115,7 +123,7 @@ plt.scatter(azi[choice], alt[choice], c='red', s=10)
 plt.show()
 
 # %%
-test = TensorMaker(choice)
+test = TensorMaker(choice, TheTuple)
 np.save('test_random.npy', test)
 
 # %%
