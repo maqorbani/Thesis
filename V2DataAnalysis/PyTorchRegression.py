@@ -107,6 +107,8 @@ testLoss = []
 optimizer = optim.Adam(model.parameters(), 0.0001)
 model.zero_grad()   # zero the gradient buffers
 
+# %%
+
 epochPercent = 0  # Dummy variable, just for printing purposes
 # Model.train model.eval >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 for i in range(epoch*m):
@@ -122,7 +124,7 @@ for i in range(epoch*m):
     output = model(xTe).cpu()
     testLoss.append(criterion(output, test_target).item())
 
-    if i % batch == 10:
+    if i % batch == 0:
         optimizer.step()
         model.zero_grad()
 
@@ -159,11 +161,11 @@ plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
 plt.show()
 # %%
-number = 17
+number = 15
 with torch.no_grad():
-    out = model(x_train[number, :, :]).to(
+    out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
-    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
+    T = y_test[number, :].to("cpu").numpy().reshape(144, -1)+0.01
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
@@ -190,10 +192,10 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-# torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
+# torch.save(model, 'Model2')  # WARNING!!!!!!!!!!!!!!
 
 # %%
-model = torch.load("Model")
+model = torch.load("Model2")
 
 # %%
 testLoss = []
