@@ -11,13 +11,14 @@ from GPUtil import showUtilization as gpu_usage
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epoch = 30
-batch = 10
+epoch = 10
+batch = 8
 
 x_train = np.load("train.npy")
 x_test = np.load("test_random.npy")
 
 m = x_train.shape[0]
+mTest = x_test.shape[0]
 # %%
 # Transforming the data into torch tensors.
 x_train, y_train = torch.tensor(x_train[:, :, :8]), \
@@ -103,26 +104,33 @@ epochLoss = []
 criterion = nn.MSELoss()
 testLoss = []
 
+epochLossBatch = []
+testLossBatch = []
+
 # %%
-optimizer = optim.Adam(model.parameters(), 0.0001)
-model.zero_grad()   # zero the gradient buffers
+optimizer = optim.Adam(model.parameters(), 0.000009)
+# model.zero_grad()   # zero the gradient buffe/rs
 
 # %%
 
 epochPercent = 0  # Dummy variable, just for printing purposes
 # Model.train model.eval >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 for i in range(epoch*m):
-    target = y_train[i % m, :].reshape(-1, 1)
+    target = y_train[i % m, :].reshape(-1, 1)  # avoiding 1D array
     x = x_train[i % m, :, :]
     output = model(x).cpu()
     loss = criterion(output, target)
     loss.backward()
     # optimizer.step()    # Does the update
     epochLoss.append(loss.item())
-    test_target = y_test[i % m, :].reshape(-1, 1)
-    xTe = x_test[i % m, :, :]
-    output = model(xTe).cpu()
-    testLoss.append(criterion(output, test_target).item())
+    epochLossBatch.append(epochLoss[-1])
+
+    with torch.no_grad():  # Calculating the test-set loss
+        test_target = y_test[i % m, :].reshape(-1, 1)
+        xTe = x_test[i % m, :, :]
+        output = model(xTe).cpu()
+        testLoss.append(criterion(output, test_target).item())
+        testLossBatch.append(testLoss[-1])
 
     if i % batch == 0:
         optimizer.step()
@@ -132,8 +140,10 @@ for i in range(epoch*m):
         print("#", end='')
         epochPercent += 1
     if (i + 1) % m == 0 and i != 0:
-        print('\n', "-->>Train>>", sum(epochLoss)/len(epochLoss))
-        print("-->>Test>>", sum(testLoss)/len(testLoss))
+        print('\n', "-->>Train>>", sum(epochLossBatch)/m)
+        print("-->>Test>>", sum(testLoss)/mTest)
+        epochLossBatch = []
+        testLossBatch = []
 
     # model.zero_grad()   # zero the gradient buffers
 
@@ -161,7 +171,7 @@ plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
 plt.show()
 # %%
-number = 15
+number = 2
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -183,19 +193,19 @@ plt.show()
 
 # %%
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(7, 10))
-ax1.hist((out).ravel())
+ax1.hist((out).ravel(), bins=50)
 ax1.title.set_text('y_hat')
-ax2.hist((T).ravel())
+ax2.hist((T).ravel(), bins=50)
 ax2.title.set_text('ground_truth')
-ax3.hist(np.abs(out-T).ravel())
+ax3.hist(np.abs(out-T).ravel(), bins=50)
 ax3.title.set_text('difference')
 
 plt.show()
 # %%
-# torch.save(model, 'Model2')  # WARNING!!!!!!!!!!!!!!
+torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
 
 # %%
-model = torch.load("Model2")
+model = torch.load("Model")
 
 # %%
 testLoss = []
