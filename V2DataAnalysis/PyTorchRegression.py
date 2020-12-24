@@ -108,7 +108,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000001)
+optimizer = optim.Adam(model.parameters(), 0.0000003)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 # %%
@@ -182,7 +182,7 @@ with torch.no_grad():
 # Plotting both prediction and target images
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(40, 10))
 ax1.imshow(np.log10(out))
-ax1.title.set_text('y_hat')
+ax1.title.set_text('prediction')
 ax2.imshow(np.log10(T))
 ax2.title.set_text('ground_truth')
 ax3.imshow((out-T), vmax=0.2)
@@ -202,7 +202,8 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
+# torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
+torch.save(model.state_dict, 'Model.pth')
 
 # %%
 model = torch.load("Model")
