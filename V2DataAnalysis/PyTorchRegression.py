@@ -121,7 +121,7 @@ for i in range(epoch*m):
     output = model(x).cpu()
     loss = criterion(output, target)
     loss.backward()
-    # optimizer.step()    # Does the update
+
     epochLoss.append(loss.item())
     epochLossBatch.append(epochLoss[-1])
 
@@ -132,14 +132,14 @@ for i in range(epoch*m):
         testLoss.append(criterion(output, test_target).item())
         testLossBatch.append(testLoss[-1])
 
-    if i % batch == 0:
+    if i % batch == batch - 1:
         optimizer.step()
         model.zero_grad()
 
     if (i + 1) * 10 // m == epochPercent + 1:
         print("#", end='')
         epochPercent += 1
-    if (i + 1) % m == 0 and i != 0:
+    if i % m == m - 1:
         print('\n', "-->>Train>>", sum(epochLossBatch)/m)
         print("-->>Test>>", sum(testLossBatch)/mTest)
         epochLossBatch = []
@@ -171,7 +171,7 @@ plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
 plt.show()
 # %%
-number = 2
+number = 9
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
