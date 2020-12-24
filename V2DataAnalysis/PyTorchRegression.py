@@ -108,7 +108,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000009)
+optimizer = optim.Adam(model.parameters(), 0.000001)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 # %%
@@ -141,7 +141,7 @@ for i in range(epoch*m):
         epochPercent += 1
     if (i + 1) % m == 0 and i != 0:
         print('\n', "-->>Train>>", sum(epochLossBatch)/m)
-        print("-->>Test>>", sum(testLoss)/mTest)
+        print("-->>Test>>", sum(testLossBatch)/mTest)
         epochLossBatch = []
         testLossBatch = []
 
