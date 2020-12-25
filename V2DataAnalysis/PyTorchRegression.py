@@ -108,7 +108,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.0000003)
+optimizer = optim.Adam(model.parameters(), 0.00000001)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 # %%
@@ -145,7 +145,6 @@ for i in range(epoch*m):
         epochLossBatch = []
         testLossBatch = []
 
-    # model.zero_grad()   # zero the gradient buffers
 
 
 # %%
@@ -169,9 +168,15 @@ for i in range(int(epoch * m / batch)):
 # %%
 plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
+
+a = np.array(epochLoss)
+for i in range(int(len(epochLoss) / m)):
+    a[i*m:((i+1)*m)] = a[i*m:((i+1)*m)].mean()
+plt.plot(np.log10(a), lw=4)
+
 plt.show()
 # %%
-number = 9
+number = 23
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -203,10 +208,10 @@ ax3.title.set_text('difference')
 plt.show()
 # %%
 # torch.save(model, 'Model')  # WARNING!!!!!!!!!!!!!!
-torch.save(model.state_dict, 'Model.pth')
+torch.save(model.state_dict(), 'Model.pth')
 
 # %%
-model = torch.load("Model")
+model.load_state_dict(torch.load("Model.pth"))
 
 # %%
 testLoss = []
