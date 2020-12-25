@@ -176,7 +176,7 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-number = 23
+number = 20
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -190,7 +190,7 @@ ax1.imshow(np.log10(out))
 ax1.title.set_text('prediction')
 ax2.imshow(np.log10(T))
 ax2.title.set_text('ground_truth')
-ax3.imshow((out-T), vmax=0.2)
+ax3.imshow(np.abs(out-T), vmax=0.2)
 ax3.title.set_text('difference')
 # plt.imshow((y_train[5, :].to("cpu").detach().numpy().reshape(144, -1))
 #            - (out.to("cpu").detach().numpy().reshape(144, -1)), vmax=0.67)
