@@ -8,12 +8,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # %%
-alt = np.loadtxt('Altitude.txt')  # Sun altitude
-azi = np.loadtxt('Azimuth.txt') - 180  # Sun azimuth
-dire = np.loadtxt('dirRad.txt')  # Sun direct radiation
-dif = np.loadtxt('difHorRad.txt')  # Sky diffuse radiation
-key = np.loadtxt('key.txt', dtype='str')  # Hour of year for each key
-selKeys = np.loadtxt('results250.txt')  # K-means selected keys
+alt = np.loadtxt('data/Altitude.txt')  # Sun altitude
+azi = np.loadtxt('data/Azimuth.txt') - 180  # Sun azimuth
+dire = np.loadtxt('data/dirRad.txt')  # Sun direct radiation
+dif = np.loadtxt('data/difHorRad.txt')  # Sky diffuse radiation
+key = np.loadtxt('data/key.txt', dtype='str')  # Hour of year for each key
+selKeys = np.loadtxt('data/results250.txt')  # K-means selected keys
 selKeys = [int(i) for i in selKeys]
 assert (len(alt) == len(azi) == len(dire) == len(dif) == len(key))
 
