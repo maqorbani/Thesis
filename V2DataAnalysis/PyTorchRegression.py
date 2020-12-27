@@ -17,13 +17,14 @@ batch = 8
 x_train = np.load("train.npy")
 x_test = np.load("test_random.npy")
 
+n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
 mTest = x_test.shape[0]
 # %%
 # Transforming the data into torch tensors.
-x_train, y_train = torch.tensor(x_train[:, :, :8]), \
+x_train, y_train = torch.tensor(x_train[:, :, :n_features]), \
     torch.tensor(x_train[:, :, -1])
-x_test, y_test = torch.tensor(x_test[:, :, :8]), \
+x_test, y_test = torch.tensor(x_test[:, :, :n_features]), \
     torch.tensor(x_test[:, :, -1])
 
 # %%
@@ -34,7 +35,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.AAfc = nn.Linear(1, 600)
 
-        self.BBfc1 = nn.Linear(7, 600)
+        self.BBfc1 = nn.Linear(n_features - 1, 600)
         self.BBfc2 = nn.Linear(600, 600)
         self.BBfc3 = nn.Linear(600, 600)
         self.BBfc4 = nn.Linear(600, 600)
@@ -45,11 +46,13 @@ class Model(nn.Module):
     def forward(self, x):
         x = x.to(device)  # import the tensror to device
 
-        # (26450, 1) the sunpatch images, reshaping for avoiding a size 1 array
+        # (36864, 1) the sunpatch images, reshaping for avoiding a size 1 array
         xA = x[:, 7].view(-1, 1)
+        xB = x[:, :7]  # (36864, 7) other than sunpatch
+        del x
+
         xA = F.relu(self.AAfc(xA))
 
-        xB = x[:, :7]  # (26450, 7) other than sunpatch
         xB = F.relu(self.BBfc1(xB))
         xB = F.relu(self.BBfc2(xB))
         xB = F.relu(self.BBfc3(xB))
@@ -139,12 +142,12 @@ for i in range(epoch*m):
     if (i + 1) * 10 // m == epochPercent + 1:
         print("#", end='')
         epochPercent += 1
+
     if i % m == m - 1:
         print('\n', "-->>Train>>", sum(epochLossBatch)/m)
         print("-->>Test>>", sum(testLossBatch)/mTest)
         epochLossBatch = []
         testLossBatch = []
-
 
 
 # %%
@@ -176,7 +179,7 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-number = 20
+number = 11
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -187,7 +190,7 @@ with torch.no_grad():
 # Plotting both prediction and target images
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(40, 10))
 ax1.imshow(np.log10(out))
-ax1.title.set_text('prediction')
+ax1.title.set_text(f'{number}\nprediction')
 ax2.imshow(np.log10(T))
 ax2.title.set_text('ground_truth')
 ax3.imshow(np.abs(out-T), vmax=0.2)

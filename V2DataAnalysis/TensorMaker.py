@@ -1,11 +1,12 @@
 '''
-The results.txt extracted from the k-means step, should be placed in the root
-of this directory as an indicator of X samples.
+The results.txt extracted from the k-means step, should be placed in the
+data folder at the root of this directory representing keys of X samples.
 '''
 # %%
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # %%
 alt = np.loadtxt('data/Altitude.txt')  # Sun altitude
@@ -25,10 +26,13 @@ with open('ab4/min-max.txt', 'r') as f:
 
 TheTuple = ab0 + ab4
 
+normalMap = Image.open('../SceneRefrences/V2Normal.jpg').resize((256, 144), 1)
+normalMap = np.asarray(normalMap).reshape(-1, 3)
+
 # %%
 
 
-def TensorMaker(indices, TheTuple):
+def TensorMaker(indices, TheTuple, normalMap):
     '''
     Creates the tensor ready for the DL model training and testing
     The images required for this function are 144 by 256 pixels
@@ -37,7 +41,7 @@ def TensorMaker(indices, TheTuple):
     n is the number of samples in the desired tensor
     '''
     n = len(indices)
-    tnsr = np.zeros((n, 36864, 9))
+    tnsr = np.zeros((n, 36864, 12))
 
     # X, Y
     tnsr[:, :, 0] = np.array(list(range(256))*144)
@@ -49,12 +53,13 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, 4] = dire[x]
         tnsr[i, :, 5] = dif[x]
         tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum of all
-        tnsr[i, :, 7] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
-        tnsr[i, :, 8] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
+        tnsr[i, :, 7:10] = normalMap[:, :] / 255                  # Nomral map
+        tnsr[i, :, 10] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
+        tnsr[i, :, 11] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
     tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :-2] = minMaxScale(tnsr[:, :, :-2])
+    tnsr[:, :, :7] = minMaxScale(tnsr[:, :, :7])
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
 
     return tnsr
@@ -99,8 +104,8 @@ def minMaxFinder():
 
 
 # %%
-train = TensorMaker(selKeys, TheTuple)
-np.save('train.npy', train)
+train = TensorMaker(selKeys, TheTuple, normalMap)
+np.save('train-NM.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -123,7 +128,7 @@ plt.scatter(azi[choice], alt[choice], c='red', s=10)
 plt.show()
 
 # %%
-test = TensorMaker(choice, TheTuple)
-np.save('test_random.npy', test)
+test = TensorMaker(choice, TheTuple, normalMap)
+np.save('test_random-NM.npy', test)
 
 # %%
