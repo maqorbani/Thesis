@@ -9,12 +9,24 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 # %%
-alt = np.loadtxt('data/Altitude.txt')  # Sun altitude
-azi = np.loadtxt('data/Azimuth.txt') - 180  # Sun azimuth
-dire = np.loadtxt('data/dirRad.txt')  # Sun direct radiation
-dif = np.loadtxt('data/difHorRad.txt')  # Sky diffuse radiation
+features = {
+    "NormalMap": True,
+    "DepthMap": True,
+    "ReflectionMap": True
+}
+
+n_axes = 9
+n_axes = n_axes + 3 if features["NormalMap"] else n_axes
+n_axes = n_axes + 1 if features["DepthMap"] else n_axes
+n_axes = n_axes + 1 if features["ReflectionMap"] else n_axes
+
+# %%
+alt = np.loadtxt('data/Altitude.txt')          # Sun altitude
+azi = np.loadtxt('data/Azimuth.txt') - 180     # Sun azimuth
+dire = np.loadtxt('data/dirRad.txt')           # Sun direct radiation
+dif = np.loadtxt('data/difHorRad.txt')         # Sky diffuse radiation
 key = np.loadtxt('data/key.txt', dtype='str')  # Hour of year for each key
-selKeys = np.loadtxt('data/results250.txt')  # K-means selected keys
+selKeys = np.loadtxt('data/results250.txt')    # K-means selected keys
 selKeys = [int(i) for i in selKeys]
 assert (len(alt) == len(azi) == len(dire) == len(dif) == len(key))
 
@@ -26,13 +38,25 @@ with open('ab4/min-max.txt', 'r') as f:
 
 TheTuple = ab0 + ab4
 
-normalMap = Image.open('../SceneRefrences/V2Normal.jpg').resize((256, 144), 1)
-normalMap = np.asarray(normalMap).reshape(-1, 3) / 255
+if features["NormalMap"]:
+    normalMap = Image.open(
+        '../SceneRefrences/V2Normal.jpg').resize((256, 144), 1)
+    normalMap = np.asarray(normalMap).reshape(-1, 3) / 255
+
+if features["DepthMap"]:
+    depthMap = Image.open(
+        '../SceneRefrences/V2Depth.jpg').resize((256, 144), 1)
+    depthMap = np.asarray(depthMap)[:, :, 0].reshape(-1) / 255
+
+if features["ReflectionMap"]:
+    reflectionMap = Image.open(
+        '../SceneRefrences/V2Reflection.jpg').resize((256, 144), 1)
+    reflectionMap = np.asarray(reflectionMap)[:, :, 0].reshape(-1) / 255
 
 # %%
 
 
-def TensorMaker(indices, TheTuple, normalMap):
+def TensorMaker(indices, TheTuple):
     '''
     Creates the tensor ready for the DL model training and testing
     The images required for this function are 144 by 256 pixels
@@ -41,7 +65,7 @@ def TensorMaker(indices, TheTuple, normalMap):
     n is the number of samples in the desired tensor
     '''
     n = len(indices)
-    tnsr = np.zeros((n, 36864, 12))
+    tnsr = np.zeros((n, 36864, n_axes))
 
     # X, Y
     tnsr[:, :, 0] = np.array(list(range(256))*144)
@@ -53,9 +77,15 @@ def TensorMaker(indices, TheTuple, normalMap):
         tnsr[i, :, 4] = dire[x]
         tnsr[i, :, 5] = dif[x]
         tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum of all
-        tnsr[i, :, 7:10] = normalMap[:, :]                        # Nomral map
-        tnsr[i, :, 10] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
-        tnsr[i, :, 11] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
+
+        if features["NormalMap"]:
+            tnsr[i, :, 7:10] = normalMap                          # Nomral map
+        if features["DepthMap"]:
+            tnsr[i, :, 10] = depthMap                             # Depth map
+        if features["ReflectionMap"]:
+            tnsr[i, :, 11] = reflectionMap                        # Reflection
+        tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
+        tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
     tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
@@ -104,8 +134,8 @@ def minMaxFinder():
 
 
 # %%
-train = TensorMaker(selKeys, TheTuple, normalMap)
-np.save('train-NM.npy', train)
+train = TensorMaker(selKeys, TheTuple)
+np.save('train-NM-D-R.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -128,7 +158,5 @@ plt.scatter(azi[choice], alt[choice], c='red', s=10)
 plt.show()
 
 # %%
-test = TensorMaker(choice, TheTuple, normalMap)
-np.save('test_random-NM.npy', test)
-
-# %%
+test = TensorMaker(choice, TheTuple)
+np.save('test_random-NM-D-R.npy', test)
