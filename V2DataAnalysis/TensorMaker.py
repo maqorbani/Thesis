@@ -12,7 +12,7 @@ from PIL import Image
 features = {
     "NormalMap": True,
     "DepthMap": True,
-    "ReflectionMap": True
+    "ReflectionMap": False
 }
 
 n_axes = 9
@@ -67,16 +67,16 @@ def TensorMaker(indices, TheTuple):
     n = len(indices)
     tnsr = np.zeros((n, 36864, n_axes))
 
-    # X, Y
+    #                                                             # X, Y
     tnsr[:, :, 0] = np.array(list(range(256))*144)
     tnsr[:, :, 1] = np.array(list(range(144))*256).reshape(256, 144).T.ravel()
-    # Al, Az, Dir, Dif
+
     for i, x in enumerate(indices):
-        tnsr[i, :, 2] = alt[x]
-        tnsr[i, :, 3] = azi[x]
-        tnsr[i, :, 4] = dire[x]
-        tnsr[i, :, 5] = dif[x]
-        tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum of all
+        tnsr[i, :, 2] = alt[x]                                    # altitude
+        tnsr[i, :, 3] = azi[x]                                    # azimuth
+        tnsr[i, :, 4] = dire[x]                                   # direct
+        tnsr[i, :, 5] = dif[x]                                    # diffuse
+        tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum (AVG)
 
         if features["NormalMap"]:
             tnsr[i, :, 7:10] = normalMap                          # Nomral map
@@ -86,7 +86,7 @@ def TensorMaker(indices, TheTuple):
             tnsr[i, :, 11] = reflectionMap                        # Reflection
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
-    tnsr[:, :, 6] / n
+    tnsr[:, :, 6] / n                                             # Average
 
     tnsr = tnsr.astype('float32')
     tnsr[:, :, :7] = minMaxScale(tnsr[:, :, :7])
@@ -135,7 +135,7 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-np.save('train-NM-D-R.npy', train)
+np.save('train-NM-D.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -159,4 +159,4 @@ plt.show()
 
 # %%
 test = TensorMaker(choice, TheTuple)
-np.save('test_random-NM-D-R.npy', test)
+np.save('test_random-NM-D.npy', test)
