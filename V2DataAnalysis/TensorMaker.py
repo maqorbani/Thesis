@@ -27,7 +27,7 @@ with open('ab4/min-max.txt', 'r') as f:
 TheTuple = ab0 + ab4
 
 normalMap = Image.open('../SceneRefrences/V2Normal.jpg').resize((256, 144), 1)
-normalMap = np.asarray(normalMap).reshape(-1, 3)
+normalMap = np.asarray(normalMap).reshape(-1, 3) / 255
 
 # %%
 
@@ -53,7 +53,7 @@ def TensorMaker(indices, TheTuple, normalMap):
         tnsr[i, :, 4] = dire[x]
         tnsr[i, :, 5] = dif[x]
         tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum of all
-        tnsr[i, :, 7:10] = normalMap[:, :] / 255                  # Nomral map
+        tnsr[i, :, 7:10] = normalMap[:, :]                        # Nomral map
         tnsr[i, :, 10] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, 11] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
     tnsr[:, :, 6] / n
