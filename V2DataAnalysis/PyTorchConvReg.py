@@ -9,11 +9,14 @@ from GPUtil import showUtilization as gpu_usage
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epoch = 10
+epoch = 8
 batch = 8
 
-x_train = np.load("train-NM.npy")
-x_test = np.load("test_random-NM.npy")
+train_set = "-NM-D"                                  # Data-sets
+test_set = "-NM-D"                                   # Data-sets
+
+x_train = np.load('train' + train_set + '.npy')      # Train-set loader
+x_test = np.load('test_random' + test_set + '.npy')  # Test-set loader
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -145,7 +148,7 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-number = 102
+number = 152
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -176,7 +179,7 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(), 'ConvModel-NM.pth')
+torch.save(model.state_dict(), f'ConvModel{train_set}.pth')
 
 # %%
-model.load_state_dict(torch.load("ConvModel-NM.pth"))
+model.load_state_dict(torch.load(f"ConvModel{train_set}.pth"))
