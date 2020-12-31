@@ -10,7 +10,7 @@ from PIL import Image
 
 # %%
 features = {
-    "AverageMap": False,
+    "AverageMap": True,
     "NormalMap": True,
     "DepthMap": True,
     "ReflectionMap": True
@@ -85,18 +85,19 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, 4] = dire[x]                                   # direct
         tnsr[i, :, 5] = dif[x]                                    # diffuse
 
-        dummy = 6
+        dmy = 6
         if features["AverageMap"]:                                # Sum (AVG)
-            tnsr[:, :, dummy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
-            dummy += 1
+            tnsr[:, :, dmy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
+            dmy += 1
         if features["NormalMap"]:                                 # Nomral map
-            tnsr[i, :, dummy:dummy + 3] = normalMap
-            dummy += 3
+            tnsr[i, :, dmy:dmy + 3] = normalMap
+            dmy += 3
         if features["DepthMap"]:                                  # Depth map
-            tnsr[i, :, dummy] = depthMap
-            dummy += 1
+            tnsr[i, :, dmy] = depthMap
+            dmy += 1
         if features["ReflectionMap"]:                             # Reflection
-            tnsr[i, :, dummy] = reflectionMap
+            tnsr[i, :, dmy] = reflectionMap
+            dmy += 1
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
 
@@ -104,7 +105,8 @@ def TensorMaker(indices, TheTuple):
         tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :7] = minMaxScale(tnsr[:, :, :7])
+    tnsr[:, :, :6 + features["AverageMap"]
+         ] = minMaxScale(tnsr[:, :, :6 + features["AverageMap"]])
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
 
     return tnsr
@@ -150,7 +152,7 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-np.save('train' + fileName + '.npy', train)
+# np.save('train' + fileName + '.npy', train)
 
 # %%
 testList = list(range(4141))
