@@ -10,12 +10,20 @@ from PIL import Image
 
 # %%
 features = {
+    "AverageMap": False,
     "NormalMap": True,
     "DepthMap": True,
-    "ReflectionMap": False
+    "ReflectionMap": True
 }
 
-n_axes = 9
+fileName = ""
+fileName = fileName + '-AVG' if not features["AverageMap"] else fileName
+fileName = fileName + '-NM' if features["NormalMap"] else fileName
+fileName = fileName + '-D' if features["DepthMap"] else fileName
+fileName = fileName + '-R' if features["ReflectionMap"] else fileName
+
+n_axes = 8
+n_axes = n_axes + 1 if features["AverageMap"] else n_axes
 n_axes = n_axes + 3 if features["NormalMap"] else n_axes
 n_axes = n_axes + 1 if features["DepthMap"] else n_axes
 n_axes = n_axes + 1 if features["ReflectionMap"] else n_axes
@@ -76,17 +84,24 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, 3] = azi[x]                                    # azimuth
         tnsr[i, :, 4] = dire[x]                                   # direct
         tnsr[i, :, 5] = dif[x]                                    # diffuse
-        tnsr[:, :, 6] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # Sum (AVG)
 
-        if features["NormalMap"]:
-            tnsr[i, :, 7:10] = normalMap                          # Nomral map
-        if features["DepthMap"]:
-            tnsr[i, :, 10] = depthMap                             # Depth map
-        if features["ReflectionMap"]:
-            tnsr[i, :, 11] = reflectionMap                        # Reflection
+        dummy = 6
+        if features["AverageMap"]:                                # Sum (AVG)
+            tnsr[:, :, dummy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
+            dummy += 1
+        if features["NormalMap"]:                                 # Nomral map
+            tnsr[i, :, dummy:dummy + 3] = normalMap
+            dummy += 3
+        if features["DepthMap"]:                                  # Depth map
+            tnsr[i, :, dummy] = depthMap
+            dummy += 1
+        if features["ReflectionMap"]:                             # Reflection
+            tnsr[i, :, dummy] = reflectionMap
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
-    tnsr[:, :, 6] / n                                             # Average
+
+    if features["AverageMap"]:                                    # Average
+        tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
     tnsr[:, :, :7] = minMaxScale(tnsr[:, :, :7])
@@ -135,7 +150,7 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-np.save('train-NM-D.npy', train)
+np.save('train' + fileName + '.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -159,4 +174,4 @@ plt.show()
 
 # %%
 test = TensorMaker(choice, TheTuple)
-np.save('test_random-NM-D.npy', test)
+np.save('test_random' + fileName + '.npy', test)
