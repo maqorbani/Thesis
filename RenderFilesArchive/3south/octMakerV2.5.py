@@ -4,7 +4,7 @@ import shutil
 import concurrent.futures
 # import numpy as np
 
-nCPU = 64  # Number of CPUs to split work to
+nCPU = 9  # Number of CPUs to split work to
 
 # os.chdir('Desktop/TheRender/')
 print('Current working dir is: ' + os.getcwd())
@@ -15,15 +15,15 @@ skies = os.listdir('Tehran_Mehrabad_IRN/')  # 4399
 dirs = []
 
 for i in os.listdir('Octs/'):
-	if os.path.isdir('Octs/'+i):
-		if len(os.listdir('Octs/'+i)) != 2:
-			dirs.append(i)
-			shutil.rmtree('Octs/'+i)
-		else:
-                    try:
-                        skies.remove('climateBasedSky@_'+i+'.sky')
-                    except ValueError:
-                        print('Warning! x not in list')
+    if os.path.isdir('Octs/'+i):
+        if len(os.listdir('Octs/'+i)) != 2:
+            dirs.append(i)
+            shutil.rmtree('Octs/'+i)
+        else:
+            try:
+                skies.remove('climateBasedSky@_'+i+'.sky')
+            except ValueError:
+                print('Warning! x not in list')
 
 # print(skies) 
 divisionCPU = len(skies) // nCPU
@@ -46,6 +46,7 @@ a = a.split()
 # read the rpict command from file
 with open('rpict.bat', 'r') as f:
     render = f.read()
+render = render.rstrip("\n")
 
 # read the pfilt command from file
 with open('pfilt.bat', 'r') as f:
@@ -78,7 +79,7 @@ def octMaker(sky, j):
         os.system('chmod +x ./*')  # chnage mode to +x
         os.system('./*')  # execute the oconv command
         os.remove(str(i[17:-4]))  # remove the octree execuatable
-
+        
         os.system(render + str(i[17:-4] + '.HDR'))  # renders using rpict
         os.remove('thesisRoom11_5_IMG.oct')  # remove the octree
 
