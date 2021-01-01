@@ -11,6 +11,7 @@ from PIL import Image
 # %%
 features = {
     "AverageMap": True,
+    "STDmap": True,
     "NormalMap": True,
     "DepthMap": True,
     "ReflectionMap": True
@@ -18,15 +19,30 @@ features = {
 
 fileName = ""
 fileName = fileName + '-AVG' if not features["AverageMap"] else fileName
+fileName = fileName + '-STD' if features["STDmap"] else fileName
 fileName = fileName + '-NM' if features["NormalMap"] else fileName
 fileName = fileName + '-D' if features["DepthMap"] else fileName
 fileName = fileName + '-R' if features["ReflectionMap"] else fileName
 
-n_axes = 8
-n_axes = n_axes + 1 if features["AverageMap"] else n_axes
-n_axes = n_axes + 3 if features["NormalMap"] else n_axes
-n_axes = n_axes + 1 if features["DepthMap"] else n_axes
-n_axes = n_axes + 1 if features["ReflectionMap"] else n_axes
+n_axes = 6
+
+if features["AverageMap"]:
+    avg = n_axes
+    n_axes += 1
+if features["STDmap"]:
+    std = n_axes
+    n_axes += 1
+if features["NormalMap"]:
+    nrml = n_axes
+    n_axes += 3
+if features["DepthMap"]:
+    dpth = n_axes
+    n_axes += 1
+if features["ReflectionMap"]:
+    rflc = n_axes
+    n_axes += 1
+
+n_axes = n_axes + 2
 
 # %%
 alt = np.loadtxt('data/Altitude.txt')          # Sun altitude
@@ -85,26 +101,19 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, 4] = dire[x]                                   # direct
         tnsr[i, :, 5] = dif[x]                                    # diffuse
 
-        dmy = 6
-        if features["AverageMap"]:                                # Sum (AVG)
-            # tnsr[:, :, dmy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
-            dmy += 1
-        if features["NormalMap"]:                                 # Nomral map
-            tnsr[i, :, dmy:dmy + 3] = normalMap
-            dmy += 3
-        if features["DepthMap"]:                                  # Depth map
-            tnsr[i, :, dmy] = depthMap
-            dmy += 1
-        if features["ReflectionMap"]:                             # Reflection
-            tnsr[i, :, dmy] = reflectionMap
-            dmy += 1
-
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
 
     if features["AverageMap"]:                                    # Average
-        tnsr[:, :, 6] = tnsr[:, :, -1].sum(axis=0) / n
-        # tnsr[:, :, 6] / n
+        tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
+    if features["STDmap"]:                                        # STD
+        tnsr[:, :, std] = tnsr[:, :, -1].std(axis=0)
+    if features["NormalMap"]:                                     # Normal map
+        tnsr[:, :, nrml:nrml + 3] = normalMap
+    if features["DepthMap"]:                                      # Depth map
+        tnsr[:, :, dpth] = depthMap
+    if features["ReflectionMap"]:                                 # Reflection
+        tnsr[:, :, rflc] = reflectionMap
 
     tnsr = tnsr.astype('float32')
     tnsr[:, :, :6 + features["AverageMap"]
