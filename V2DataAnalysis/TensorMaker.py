@@ -87,7 +87,7 @@ def TensorMaker(indices, TheTuple):
 
         dmy = 6
         if features["AverageMap"]:                                # Sum (AVG)
-            tnsr[:, :, dmy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
+            # tnsr[:, :, dmy] += np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')
             dmy += 1
         if features["NormalMap"]:                                 # Nomral map
             tnsr[i, :, dmy:dmy + 3] = normalMap
@@ -98,11 +98,13 @@ def TensorMaker(indices, TheTuple):
         if features["ReflectionMap"]:                             # Reflection
             tnsr[i, :, dmy] = reflectionMap
             dmy += 1
+
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
 
     if features["AverageMap"]:                                    # Average
-        tnsr[:, :, 6] / n
+        tnsr[:, :, 6] = tnsr[:, :, -1].sum(axis=0) / n
+        # tnsr[:, :, 6] / n
 
     tnsr = tnsr.astype('float32')
     tnsr[:, :, :6 + features["AverageMap"]
