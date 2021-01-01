@@ -14,7 +14,7 @@ features = {
     "STDmap": True,
     "NormalMap": True,
     "DepthMap": True,
-    "ReflectionMap": True
+    "ReflectionMap": False
 }
 
 fileName = ""
@@ -116,7 +116,7 @@ def TensorMaker(indices, TheTuple):
         tnsr[:, :, rflc] = reflectionMap
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :6 + features["AverageMap"]
+    tnsr[:, :, :6 + features["AverageMap"] + features["STDmap"]
          ] = minMaxScale(tnsr[:, :, :6 + features["AverageMap"]])
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
 
