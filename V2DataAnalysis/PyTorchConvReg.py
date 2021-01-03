@@ -9,14 +9,13 @@ from GPUtil import showUtilization as gpu_usage
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epoch = 8
-batch = 8
+epoch = 5
+batch = 64
 
-train_set = "-NM-D"                                  # Data-sets
-test_set = "-NM-D"                                   # Data-sets
+dataSet = "-NM-D-AO"                                  # Data-sets
 
-x_train = np.load('train' + train_set + '.npy')      # Train-set loader
-x_test = np.load('test_random' + test_set + '.npy')  # Test-set loader
+x_train = np.load('train' + dataSet + '.npy')      # Train-set loader
+x_test = np.load('test_random' + dataSet + '.npy')  # Test-set loader
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -38,24 +37,28 @@ x_test = np.transpose(x_test, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.AAconv = nn.Conv2d(1, 400, 1)
+        self.AAconv = nn.Conv2d(2, 400, 1)
 
-        self.BBconv1 = nn.Conv2d(n_features - 1, 600, 1)
+        self.BBconv1 = nn.Conv2d(n_features - 2, 600, 1)
         self.BBconv2 = nn.Conv2d(600, 600, 1)
         self.BBconv3 = nn.Conv2d(600, 600, 1)
         self.BBconv4 = nn.Conv2d(600, 600, 1)
+        self.BBconv5 = nn.Conv2d(600, 600, 1)
+        self.BBconv6 = nn.Conv2d(600, 600, 1)
 
         self.CCconv = nn.Conv2d(1000, 600, 1)
         self.out = nn.Conv2d(600, 1, 1)
 
+        self.m = nn.Dropout(p=0.2)
+
     def forward(self, x):
         x = x.to(device)
 
-        # (36864, 1) the sunpatch images, reshaping for avoiding a size 1 array
-        xA = x[-1, :, :]
-        xA = xA.reshape(1, 1, xA.shape[-2], xA.shape[-1])
-        # (36864, 7) other than sunpatch
-        xB = x[:-1, :, :].unsqueeze(0)
+        # (1, 144, 256) sunpatch image, reshaping for avoiding a size 1 array
+        xA = x[-2:, :, :]
+        xA = xA.reshape(1, 2, xA.shape[-2], xA.shape[-1])  # (1, 1, 144, 256)
+        # (7, 144, 256) other than sunpatch
+        xB = x[:-2, :, :].unsqueeze(0)                     # (1, 7, 144, 256)
         del x
 
         xA = F.relu(self.AAconv(xA))
@@ -64,6 +67,8 @@ class Model(nn.Module):
         xB = F.relu(self.BBconv2(xB))
         xB = F.relu(self.BBconv3(xB))
         xB = F.relu(self.BBconv4(xB))
+        xB = F.relu(self.BBconv5(xB))
+        xB = F.relu(self.BBconv6(xB))
 
         xB = torch.cat([xA, xB], dim=1)
         del xA
@@ -98,7 +103,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.00001)
+optimizer = optim.Adam(model.parameters(), 0.0001)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
@@ -148,7 +153,7 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-number = 152
+number = 107
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -179,7 +184,7 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(), f'ConvModel{train_set}.pth')
+torch.save(model.state_dict(), f'ConvModel{dataSet}.pth')
 
 # %%
-model.load_state_dict(torch.load(f"ConvModel{train_set}.pth"))
+model.load_state_dict(torch.load(f"ConvModel{dataSet}.pth"))
