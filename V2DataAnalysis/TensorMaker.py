@@ -10,23 +10,28 @@ from PIL import Image
 
 # %%
 features = {
-    "AverageMap": True,
-    "STDmap": True,
+    "AVGMap": True,
+    "STDmap": False,
     "NormalMap": True,
     "DepthMap": True,
-    "ReflectionMap": False
+    "ReflectionMap": False,
+    "AOmap": True,
+    "View_Number": 2
 }
 
+View = features["View_Number"]
+
 fileName = ""
-fileName = fileName + '-AVG' if not features["AverageMap"] else fileName
+fileName = fileName + '-AVG' if not features["AVGMap"] else fileName
 fileName = fileName + '-STD' if features["STDmap"] else fileName
 fileName = fileName + '-NM' if features["NormalMap"] else fileName
 fileName = fileName + '-D' if features["DepthMap"] else fileName
 fileName = fileName + '-R' if features["ReflectionMap"] else fileName
+fileName = fileName + '-AO' if features["AOmap"] else fileName
 
 n_axes = 6
 
-if features["AverageMap"]:
+if features["AVGMap"]:
     avg = n_axes
     n_axes += 1
 if features["STDmap"]:
@@ -41,8 +46,11 @@ if features["DepthMap"]:
 if features["ReflectionMap"]:
     rflc = n_axes
     n_axes += 1
+if features["AOmap"]:
+    aomp = n_axes
+    n_axes += 1
 
-n_axes = n_axes + 2
+n_axes += 2
 
 # %%
 alt = np.loadtxt('data/Altitude.txt')          # Sun altitude
@@ -64,18 +72,23 @@ TheTuple = ab0 + ab4
 
 if features["NormalMap"]:
     normalMap = Image.open(
-        '../SceneRefrences/V2Normal.jpg').resize((256, 144), 1)
+        f'../SceneRefrences/V{View}Normal.jpg').resize((256, 144), 1)
     normalMap = np.asarray(normalMap).reshape(-1, 3) / 255
 
 if features["DepthMap"]:
     depthMap = Image.open(
-        '../SceneRefrences/V2Depth.jpg').resize((256, 144), 1)
+        f'../SceneRefrences/V{View}Depth.jpg').resize((256, 144), 1)
     depthMap = np.asarray(depthMap)[:, :, 0].reshape(-1) / 255
 
 if features["ReflectionMap"]:
     reflectionMap = Image.open(
-        '../SceneRefrences/V2Reflection.jpg').resize((256, 144), 1)
+        f'../SceneRefrences/V{View}Reflection.jpg').resize((256, 144), 1)
     reflectionMap = np.asarray(reflectionMap)[:, :, 0].reshape(-1) / 255
+
+if features["AOmap"]:
+    AOmap = Image.open(
+        f'../SceneRefrences/V{View}AO.jpg').resize((256, 144), 1)
+    AOmap = np.asarray(AOmap)[:, :, 0].reshape(-1) / 255
 
 # %%
 
@@ -104,7 +117,7 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
 
-    if features["AverageMap"]:                                    # Average
+    if features["AVGMap"]:                                    # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
     if features["STDmap"]:                                        # STD
         tnsr[:, :, std] = tnsr[:, :, -1].std(axis=0)
@@ -114,10 +127,12 @@ def TensorMaker(indices, TheTuple):
         tnsr[:, :, dpth] = depthMap
     if features["ReflectionMap"]:                                 # Reflection
         tnsr[:, :, rflc] = reflectionMap
+    if features["AOmap"]:                                         # AO map
+        tnsr[:, :, aomp] = AOmap
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :6 + features["AverageMap"] + features["STDmap"]
-         ] = minMaxScale(tnsr[:, :, :6 + features["AverageMap"]])
+    tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]] = \
+        minMaxScale(tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]])
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
 
     return tnsr
@@ -163,7 +178,7 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-# np.save('train' + fileName + '.npy', train)
+np.save('train' + fileName + '.npy', train)
 
 # %%
 testList = list(range(4141))
