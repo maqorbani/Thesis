@@ -8,14 +8,24 @@ import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 
 # %%
+Dictionary = {
+    'epoch': 8,
+    'batch': 8,
+    'dataset': '',
+    'View #': 2
+}
+# %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epoch = 8
-batch = 8
+epoch = Dictionary['epoch']
+batch = Dictionary['batch']
 
-data_set = "-NM-D"                                           # Data-sets
+data_set = Dictionary['dataset']                             # Data-sets
+View = Dictionary['View #']
 
-x_train = np.load('data/data' + data_set + '.npz')['train']  # Train-set loader
-x_test = np.load('data/data' + data_set + '.npz')['test']    # Test-set loader
+x_train = np.load(f'../V{View}DataAnalysis/data/data' +
+                  data_set + '.npz')['train']
+x_test = np.load(f'../V{View}DataAnalysis/data/data' +
+                 data_set + '.npz')['test']
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -97,7 +107,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.00001)
+optimizer = optim.Adam(model.parameters(), 0.000005)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
@@ -178,7 +188,15 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(), f'ConvModel{data_set}.pth')
+torch.save(model.state_dict(),
+           f'../V{View}DataAnalysis/ConvModel{data_set}.pth')
 
 # %%
-model.load_state_dict(torch.load(f"ConvModel{data_set}.pth"))
+model.load_state_dict(torch.load(
+    f'../V{View}DataAnalysis/ConvModel{data_set}.pth'))
+
+# %%
+# For transfer learning model load
+learnedView = 2
+model.load_state_dict(torch.load(
+    f'../V{learnedView}DataAnalysis/ConvModel{data_set}.pth'))
