@@ -200,3 +200,25 @@ model.load_state_dict(torch.load(
 learnedView = 2
 model.load_state_dict(torch.load(
     f'../V{learnedView}DataAnalysis/ConvModel{data_set}.pth'))
+
+# %%
+# Loss calculator over the train-test sets
+train_loss = []
+test_loss = []
+
+with torch.no_grad():
+    for i in range(m):
+        target = y_train[i, :].reshape(-1, 1)  # avoiding 1D array
+        x = x_train[i, :, :, :]
+        output = model(x).cpu().reshape(-1, 1)
+        loss = criterion(output, target)
+        train_loss.append(loss.item())
+    for i in range(mTest):
+        target = y_test[i, :].reshape(-1, 1)  # avoiding 1D array
+        x = x_test[i, :, :, :]
+        output = model(x).cpu().reshape(-1, 1)
+        loss = criterion(output, target)
+        test_loss.append(loss.item())
+
+print(sum(train_loss)/m)
+print(sum(test_loss)/mTest)
