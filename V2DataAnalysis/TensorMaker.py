@@ -117,7 +117,7 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
         tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
 
-    if features["AVGMap"]:                                    # Average
+    if features["AVGMap"]:                                        # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
     if features["STDmap"]:                                        # STD
         tnsr[:, :, std] = tnsr[:, :, -1].std(axis=0)
@@ -178,7 +178,7 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-np.save('train' + fileName + '.npy', train)
+# np.save('data/train' + fileName + '.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -202,4 +202,7 @@ plt.show()
 
 # %%
 test = TensorMaker(choice, TheTuple)
-np.save('test_random' + fileName + '.npy', test)
+# np.save('data/test_random' + fileName + '.npy', test)
+
+# %%
+np.savez_compressed('data/data'+fileName+'.npz', train=train, test=test)

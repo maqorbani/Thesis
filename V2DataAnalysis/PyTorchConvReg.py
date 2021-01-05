@@ -12,11 +12,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epoch = 8
 batch = 8
 
-train_set = "-NM-D"                                  # Data-sets
-test_set = "-NM-D"                                   # Data-sets
+data_set = "-NM-D"                                           # Data-sets
 
-x_train = np.load('train' + train_set + '.npy')      # Train-set loader
-x_test = np.load('test_random' + test_set + '.npy')  # Test-set loader
+x_train = np.load('data/data' + data_set + '.npz')['train']  # Train-set loader
+x_test = np.load('data/data' + data_set + '.npz')['test']    # Test-set loader
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -179,7 +178,7 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(), f'ConvModel{train_set}.pth')
+torch.save(model.state_dict(), f'ConvModel{data_set}.pth')
 
 # %%
-model.load_state_dict(torch.load(f"ConvModel{train_set}.pth"))
+model.load_state_dict(torch.load(f"ConvModel{data_set}.pth"))
