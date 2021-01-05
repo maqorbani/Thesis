@@ -114,8 +114,11 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, 4] = dire[x]                                   # direct
         tnsr[i, :, 5] = dif[x]                                    # diffuse
 
-        tnsr[i, :, -2] = np.loadtxt(f'ab0/{key[x]}/{key[x]}.gz')  # ab0
-        tnsr[i, :, -1] = np.loadtxt(f'ab4/{key[x]}/{key[x]}.gz')  # ab4
+        # AB0, Ab4
+        tnsr[i, :, -2] = \
+            np.loadtxt(f'../V{View}DataAnalysis/ab0/{key[x]}/{key[x]}.gz')
+        tnsr[i, :, -1] = \
+            np.loadtxt(f'../V{View}DataAnalysis/ab4/{key[x]}/{key[x]}.gz')
 
     if features["AVGMap"]:                                        # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
@@ -205,4 +208,5 @@ test = TensorMaker(choice, TheTuple)
 # np.save('data/test_random' + fileName + '.npy', test)
 
 # %%
-np.savez_compressed('data/data'+fileName+'.npz', train=train, test=test)
+np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
+                    fileName+'.npz', train=train, test=test)
