@@ -9,11 +9,12 @@ from GPUtil import showUtilization as gpu_usage
 
 # %%
 Dictionary = {
-    'epoch': 8,
+    'epoch': 3,
     'batch': 8,
-    'dataset': '',
+    'dataset': '-D-AO',
     'View #': 2
 }
+
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epoch = Dictionary['epoch']
@@ -107,14 +108,15 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000005)
+optimizer = optim.Adam(model.parameters(), 0.000009)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
 # %%
 
 epochPercent = 0  # Dummy variable, just for printing purposes
-# Model.train model.eval >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+model.train()
+
 for i in range(epoch*m):
     target = y_train[i % m, :].reshape(-1, 1)  # avoiding 1D array
     x = x_train[i % m, :, :, :]
@@ -126,8 +128,8 @@ for i in range(epoch*m):
     epochLossBatch.append(epochLoss[-1])
 
     with torch.no_grad():  # Calculating the test-set loss
-        test_target = y_test[i % m, :].reshape(-1, 1)
-        xTe = x_test[i % m, :, :, :]
+        test_target = y_test[i % mTest, :].reshape(-1, 1)
+        xTe = x_test[i % mTest, :, :, :]
         output = model(xTe).cpu().reshape(-1, 1)
         testLoss.append(criterion(output, test_target).item())
         testLossBatch.append(testLoss[-1])
@@ -142,7 +144,7 @@ for i in range(epoch*m):
 
     if i % m == m - 1:
         print('\n', "-->>Train>>", sum(epochLossBatch)/m)
-        print("-->>Test>>", sum(testLossBatch)/mTest)
+        print("-->>Test>>", sum(testLossBatch)/m)
         epochLossBatch = []
         testLossBatch = []
 
@@ -157,6 +159,7 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
+model.eval()
 number = 152
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
