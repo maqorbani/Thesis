@@ -8,14 +8,25 @@ import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 
 # %%
+Dictionary = {
+    'epoch': 3,
+    'batch': 8,
+    'dataset': '-D-AO',
+    'View #': 2
+}
+
+# %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epoch = 5
-batch = 64
+epoch = Dictionary['epoch']
+batch = Dictionary['batch']
 
-dataSet = "-NM-D-AO"                                  # Data-sets
+data_set = Dictionary['dataset']                             # Data-sets
+View = Dictionary['View #']
 
-x_train = np.load('train' + dataSet + '.npy')      # Train-set loader
-x_test = np.load('test_random' + dataSet + '.npy')  # Test-set loader
+x_train = np.load(f'../V{View}DataAnalysis/data/data' +
+                  data_set + '.npz')['train']
+x_test = np.load(f'../V{View}DataAnalysis/data/data' +
+                 data_set + '.npz')['test']
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -110,7 +121,8 @@ optimizer = optim.Adam(model.parameters(), 0.0001)
 # %%
 
 epochPercent = 0  # Dummy variable, just for printing purposes
-# Model.train model.eval >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+model.train()
+
 for i in range(epoch*m):
     target = y_train[i % m, :].reshape(-1, 1)  # avoiding 1D array
     x = x_train[i % m, :, :, :]
@@ -122,8 +134,8 @@ for i in range(epoch*m):
     epochLossBatch.append(epochLoss[-1])
 
     with torch.no_grad():  # Calculating the test-set loss
-        test_target = y_test[i % m, :].reshape(-1, 1)
-        xTe = x_test[i % m, :, :, :]
+        test_target = y_test[i % mTest, :].reshape(-1, 1)
+        xTe = x_test[i % mTest, :, :, :]
         output = model(xTe).cpu().reshape(-1, 1)
         testLoss.append(criterion(output, test_target).item())
         testLossBatch.append(testLoss[-1])
@@ -138,7 +150,7 @@ for i in range(epoch*m):
 
     if i % m == m - 1:
         print('\n', "-->>Train>>", sum(epochLossBatch)/m)
-        print("-->>Test>>", sum(testLossBatch)/mTest)
+        print("-->>Test>>", sum(testLossBatch)/m)
         epochLossBatch = []
         testLossBatch = []
 
@@ -153,7 +165,8 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-number = 107
+model.eval()
+number = 152
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -184,7 +197,37 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(), f'ConvModel{dataSet}.pth')
+torch.save(model.state_dict(),
+           f'../V{View}DataAnalysis/ConvModel{data_set}.pth')
 
 # %%
-model.load_state_dict(torch.load(f"ConvModel{dataSet}.pth"))
+model.load_state_dict(torch.load(
+    f'../V{View}DataAnalysis/ConvModel{data_set}.pth'))
+
+# %%
+# For transfer learning model load
+learnedView = 2
+model.load_state_dict(torch.load(
+    f'../V{learnedView}DataAnalysis/ConvModel{data_set}.pth'))
+
+# %%
+# Loss calculator over the train-test sets
+train_loss = []
+test_loss = []
+
+with torch.no_grad():
+    for i in range(m):
+        target = y_train[i, :].reshape(-1, 1)  # avoiding 1D array
+        x = x_train[i, :, :, :]
+        output = model(x).cpu().reshape(-1, 1)
+        loss = criterion(output, target)
+        train_loss.append(loss.item())
+    for i in range(mTest):
+        target = y_test[i, :].reshape(-1, 1)  # avoiding 1D array
+        x = x_test[i, :, :, :]
+        output = model(x).cpu().reshape(-1, 1)
+        loss = criterion(output, target)
+        test_loss.append(loss.item())
+
+print(sum(train_loss)/m)
+print(sum(test_loss)/mTest)
