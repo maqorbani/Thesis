@@ -9,9 +9,9 @@ from GPUtil import showUtilization as gpu_usage
 
 # %%
 Dictionary = {
-    'epoch': 3,
+    'epoch': 5,
     'batch': 8,
-    'dataset': '-D-AO',
+    'dataset': '-NM-AO',
     'View #': 2
 }
 
@@ -52,13 +52,13 @@ class Model(nn.Module):
         self.AOconv = nn.Conv2d(1, 600, 1)
 
         self.BBconv1 = nn.Conv2d(n_features - 2, 600, 1)
-        self.BBconv2 = nn.Conv2d(600, 600, 1)
+        self.BBconv2 = nn.Conv2d(1200, 600, 1)
         self.BBconv3 = nn.Conv2d(600, 600, 1)
         self.BBconv4 = nn.Conv2d(600, 600, 1)
         self.BBconv5 = nn.Conv2d(600, 600, 1)
         self.BBconv6 = nn.Conv2d(600, 600, 1)
 
-        self.CCconv = nn.Conv2d(1600, 600, 1)
+        self.CCconv = nn.Conv2d(1000, 600, 1)
         self.out = nn.Conv2d(600, 1, 1)
 
         self.m = nn.Dropout(p=0.2)
@@ -80,15 +80,16 @@ class Model(nn.Module):
         xO = F.relu(self.AOconv(xO))
 
         xB = F.relu(self.BBconv1(xB))
+        xB = torch.cat([xB, xO], dim=1)
+        del xO
         xB = F.relu(self.BBconv2(xB))
         xB = F.relu(self.BBconv3(xB))
         xB = F.relu(self.BBconv4(xB))
         xB = F.relu(self.BBconv5(xB))
         xB = F.relu(self.BBconv6(xB))
 
-        xB = torch.cat([xA, xO, xB], dim=1)
+        xB = torch.cat([xA, xB], dim=1)
         del xA
-        del xO
         xB = F.relu(self.CCconv(xB))
         xB = F.relu(self.out(xB))
 
@@ -120,7 +121,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000005)
+optimizer = optim.Adam(model.parameters(), 0.000008)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
@@ -204,7 +205,7 @@ ax3.title.set_text('difference')
 plt.show()
 # %%
 torch.save(model.state_dict(),
-           f'../V{View}DataAnalysis/ConvModel{data_set}.pth')
+           f'../V{View}DataAnalysis/ConvModel{data_set}-2.pth')
 
 # %%
 model.load_state_dict(torch.load(
