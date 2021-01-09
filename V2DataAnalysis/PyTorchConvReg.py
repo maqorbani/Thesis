@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 
+import pytorch_ssim
+
 # %%
 Dictionary = {
     'epoch': 3,
@@ -225,3 +227,24 @@ with torch.no_grad():
 
 print(sum(train_loss)/m)
 print(sum(test_loss)/mTest)
+
+# %%
+train_ssim = []
+test_ssim = []
+
+with torch.no_grad():
+    for i in range(m):
+        target = y_train[i, :].reshape(1, 1, 144, 256)
+        x = x_train[i, :, :, :]
+        output = model(x).cpu()
+        loss = pytorch_ssim.ssim(target, output)
+        train_ssim.append(loss.item())
+    for i in range(mTest):
+        target = y_test[i, :].reshape(1, 1, 144, 256)
+        x = x_test[i, :, :, :]
+        output = model(x).cpu()
+        loss = pytorch_ssim.ssim(target, output)
+        test_ssim.append(loss.item())
+
+print(sum(train_ssim)/m)
+print(sum(test_ssim)/mTest)
