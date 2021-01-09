@@ -4,3 +4,7 @@ on view 5 on 200 data-set started 6.37-05 train 7.98e-5 test loss
 	18 epochs --> 4.30e-5 train 5.85e-5 test loss
 on view 6 on 50 data-set started 6.52e-5 train 4.69e-5 test loss
 	23 epochs --> 3.28e-5 train 5.00e-5 test loss (23 epoch on 50 is eqv to 6 epoch on 200)
+
+-NM-AO-2 model 140 epochs 3.16e-5 train 4.03e-5 test loss with architecture
+
+on view 5 on 200 data-set started 5.95-05 train 7.76e-5 test loss
