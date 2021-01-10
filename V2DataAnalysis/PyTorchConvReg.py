@@ -13,7 +13,7 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 3,
     'batch': 8,
-    'dataset': '',
+    'dataset': '-NM-D-AO',
     'View #': 2
 }
 
@@ -252,7 +252,9 @@ with torch.no_grad():
         loss = psnr(target, output)
         test_psnr.append(loss.item())
 
+print('SSIM')
 print(sum(train_ssim)/m)
 print(sum(test_ssim)/mTest)
+print('PSNR')
 print(sum(train_psnr)/m)
 print(sum(test_psnr)/mTest)

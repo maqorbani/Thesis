@@ -13,7 +13,7 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '-NM-AO',
+    'dataset': '-NM-D-AO',
     'View #': 2
 }
 
@@ -123,7 +123,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000008)
+optimizer = optim.Adam(model.parameters(), 0.000004)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
@@ -217,7 +217,7 @@ model.load_state_dict(torch.load(
 # For transfer learning model load
 learnedView = 2
 model.load_state_dict(torch.load(
-    f'../V{learnedView}DataAnalysis/ConvModel{data_set}.pth'))
+    f'../V{learnedView}DataAnalysis/ConvModel{data_set}-2.pth'))
 
 # %%
 # Loss calculator over the train-test sets
@@ -265,7 +265,9 @@ with torch.no_grad():
         loss = psnr(target, output)
         test_psnr.append(loss.item())
 
+print('SSIM')
 print(sum(train_ssim)/m)
 print(sum(test_ssim)/mTest)
+print('PSNR')
 print(sum(train_psnr)/m)
 print(sum(test_psnr)/mTest)
