@@ -7,14 +7,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 
-import pytorch_ssim
-from piq import psnr
+from piq import psnr, ssim
 
 # %%
 Dictionary = {
     'epoch': 3,
     'batch': 8,
-    'dataset': '-D-AO',
+    'dataset': '',
     'View #': 2
 }
 
@@ -232,20 +231,28 @@ print(sum(test_loss)/mTest)
 # %%
 train_ssim = []
 test_ssim = []
+train_psnr = []
+test_psnr = []
 
 with torch.no_grad():
     for i in range(m):
         target = y_train[i, :].reshape(1, 1, 144, 256)
         x = x_train[i, :, :, :]
         output = model(x).cpu()
-        loss = pytorch_ssim.ssim(target, output)
+        loss = ssim(target, output)
         train_ssim.append(loss.item())
+        loss = psnr(target, output)
+        train_psnr.append(loss.item())
     for i in range(mTest):
         target = y_test[i, :].reshape(1, 1, 144, 256)
         x = x_test[i, :, :, :]
         output = model(x).cpu()
-        loss = pytorch_ssim.ssim(target, output)
+        loss = ssim(target, output)
         test_ssim.append(loss.item())
+        loss = psnr(target, output)
+        test_psnr.append(loss.item())
 
 print(sum(train_ssim)/m)
 print(sum(test_ssim)/mTest)
+print(sum(train_psnr)/m)
+print(sum(test_psnr)/mTest)
