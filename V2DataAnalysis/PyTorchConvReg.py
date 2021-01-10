@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 
 import pytorch_ssim
+from piq import psnr
 
 # %%
 Dictionary = {
