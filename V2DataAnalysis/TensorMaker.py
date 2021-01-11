@@ -18,7 +18,8 @@ features = {
     "AOmap": True,
     "View_Number": 2,
     "Number of samples": 250,
-    "Number of test": 250
+    "Number of test": 250,
+    "Transfer Learning": [25, 100, 25]
 }
 
 m = features["Number of samples"]
@@ -213,3 +214,17 @@ test = TensorMaker(choice, TheTuple)
 # %%
 np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
                     fileName+'.npz', train=train, test=test)
+
+# %%
+a, b, c = features["Transfer Learning"]
+TLsamples = np.arange(a, b, c)
+
+choice = np.random.choice(range(4141), mTest)
+test = TensorMaker(choice, TheTuple)
+
+for i in TLsamples:
+    selKeys = np.loadtxt(f'data/results{i}.txt')
+    selKeys = [int(i) for i in selKeys]
+    train = TensorMaker(selKeys, TheTuple)
+    np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
+                        fileName+f'-{i}.npz', train=train, test=test)
