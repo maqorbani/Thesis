@@ -129,4 +129,4 @@ for i in range(k):
 (coincidental+np.eye(k)*coincidental.max()).min(axis=0)  # Gets dist matrix
 
 # %%
-np.savetxt('results250.txt', selectKeys, fmt='%s')
+np.savetxt(f'results{k}.txt', selectKeys, fmt='%s')
