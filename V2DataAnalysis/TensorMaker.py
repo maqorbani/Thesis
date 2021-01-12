@@ -12,14 +12,14 @@ from PIL import Image
 features = {
     "AVGMap": True,
     "STDmap": False,
-    "NormalMap": False,
-    "DepthMap": True,
+    "NormalMap": True,
+    "DepthMap": False,
     "ReflectionMap": False,
     "AOmap": True,
-    "View_Number": 2,
+    "View_Number": 5,
     "Number of samples": 250,
     "Number of test": 250,
-    "Transfer Learning": [25, 100, 25]
+    "Transfer Learning": [25, 125, 25]
 }
 
 m = features["Number of samples"]
@@ -67,10 +67,10 @@ selKeys = np.loadtxt(f'data/results{m}.txt')   # K-means selected keys
 selKeys = [int(i) for i in selKeys]
 assert (len(alt) == len(azi) == len(dire) == len(dif) == len(key))
 
-with open('ab0/min-max.txt', 'r') as f:
+with open(f'../V{View}DataAnalysis/ab0/min-max.txt', 'r') as f:
     ab0 = [float(i) for i in f.read().split(', ')]
 
-with open('ab4/min-max.txt', 'r') as f:
+with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
     ab4 = [float(i) for i in f.read().split(', ')]
 
 TheTuple = ab0 + ab4
