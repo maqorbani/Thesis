@@ -11,10 +11,12 @@ from piq import psnr, ssim
 
 # %%
 Dictionary = {
-    'epoch': 3,
+    'epoch': 5,
     'batch': 8,
-    'dataset': '-NM-D-AO',
-    'View #': 2
+    'dataset': '-NM-AO',
+    'View #': 5,
+    'transfer learning': True,  # TL mode
+    '# samples': 25  # For transfer Learning only
 }
 
 # %%
@@ -25,10 +27,20 @@ batch = Dictionary['batch']
 data_set = Dictionary['dataset']                             # Data-sets
 View = Dictionary['View #']
 
-x_train = np.load(f'../V{View}DataAnalysis/data/data' +
-                  data_set + '.npz')['train']
-x_test = np.load(f'../V{View}DataAnalysis/data/data' +
-                 data_set + '.npz')['test']
+TLmode = Dictionary['transfer learning']
+mTL = Dictionary['# samples']
+
+if not TLmode:
+    x_train = np.load(f'../V{View}DataAnalysis/data/data' +
+                      data_set + '.npz')['train']
+    x_test = np.load(f'../V{View}DataAnalysis/data/data' +
+                     data_set + '.npz')['test']
+else:
+    x_train = np.load(f'../V{View}DataAnalysis/data/data' +
+                      data_set + f'-{mTL}.npz')['train']
+    x_test = np.load(f'../V{View}DataAnalysis/data/data' +
+                     data_set + f'-{mTL}.npz')['test']
+
 
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
@@ -193,12 +205,21 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-torch.save(model.state_dict(),
-           f'../V{View}DataAnalysis/ConvModel{data_set}.pth')
+if not TLmode:
+    torch.save(model.state_dict(),
+               f'../V{View}DataAnalysis/ConvModel{data_set}-2.pth')
+else:
+    torch.save(model.state_dict(),
+               f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth')
+
 
 # %%
-model.load_state_dict(torch.load(
-    f'../V{View}DataAnalysis/ConvModel{data_set}.pth'))
+if not TLmode:
+    model.load_state_dict(torch.load(
+        f'../V{View}DataAnalysis/ConvModel{data_set}-2.pth'))
+else:
+    model.load_state_dict(torch.load(
+        f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth'))
 
 # %%
 # For transfer learning model load
