@@ -16,10 +16,10 @@ features = {
     "DepthMap": False,
     "ReflectionMap": False,
     "AOmap": True,
-    "View_Number": 5,
+    "View_Number": 2,
     "Number of samples": 250,
-    "Number of test": 250,
-    "Transfer Learning": [25, 125, 25]
+    "Number of test": 400,
+    "Transfer Learning": [25, 125, 25]  # Transfer learning mode only
 }
 
 m = features["Number of samples"]
@@ -138,8 +138,8 @@ def TensorMaker(indices, TheTuple):
 
     tnsr = tnsr.astype('float32')
     tnsr[:, :, :7 + features["STDmap"]] = \
-        minMaxScale(tnsr[:, :, :7 + features["STDmap"]])
-    tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
+        minMaxScale(tnsr[:, :, :7 + features["STDmap"]])          # map-norm
+    tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)      # AB0, AB4
 
     if features["AVGMap"]:                                        # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
@@ -187,7 +187,6 @@ def minMaxFinder():
 
 # %%
 train = TensorMaker(selKeys, TheTuple)
-# np.save('data/train' + fileName + '.npy', train)
 
 # %%
 testList = list(range(4141))
@@ -195,10 +194,11 @@ for i in selKeys:
     testList.remove(i)
 
 # %%
-# test = TensorMaker(testList)
-
-# %%
-choice = np.random.choice(testList, mTest)
+try:
+    choice = np.loadtxt(f'data/test-set-{mTest}.txt', int)
+except OSError:
+    choice = np.random.choice(testList, mTest)
+    np.savetxt(f'data/test-set-{mTest}.txt', choice, fmt='%s', delimiter='\n')
 
 plt.scatter(dire, dif, c='grey', s=2)
 plt.scatter(dire[choice], dif[choice], c='red', s=10)
@@ -210,13 +210,13 @@ plt.show()
 
 # %%
 test = TensorMaker(choice, TheTuple)
-# np.save('data/test_random' + fileName + '.npy', test)
 
 # %%
 np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
                     fileName+'.npz', train=train, test=test)
 
 # %%
+# TRANSFER LEARNING DATASET CREATOR!
 a, b, c = features["Transfer Learning"]
 TLsamples = np.arange(a, b, c)
 
