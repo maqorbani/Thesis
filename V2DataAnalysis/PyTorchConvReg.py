@@ -2,7 +2,7 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-import torch.nn.functional as F
+# import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
@@ -13,11 +13,17 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
+    'Model_Arch': 2,
     'dataset': '-NM-AO',
     'View #': 5,
     'transfer learning': True,  # TL mode
-    '# samples': 25  # For transfer Learning only
+    '# samples': 100  # For transfer Learning only
 }
+
+if Dictionary['Model_Arch'] == 1:
+    from PyTorchModel import Model
+elif Dictionary['Model_Arch'] == 2:
+    from PyTorchModel import Model_2 as Model
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -58,36 +64,49 @@ x_test = np.transpose(x_test, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 
 # %%
 
-
+'''
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.AAconv = nn.Conv2d(1, 400, 1)
+        self.AOconv = nn.Conv2d(1, 600, 1)
 
-        self.BBconv1 = nn.Conv2d(n_features - 1, 600, 1)
-        self.BBconv2 = nn.Conv2d(600, 600, 1)
+        self.BBconv1 = nn.Conv2d(n_features - 2, 600, 1)
+        self.BBconv2 = nn.Conv2d(1200, 600, 1)
         self.BBconv3 = nn.Conv2d(600, 600, 1)
         self.BBconv4 = nn.Conv2d(600, 600, 1)
+        self.BBconv5 = nn.Conv2d(600, 600, 1)
+        self.BBconv6 = nn.Conv2d(600, 600, 1)
 
         self.CCconv = nn.Conv2d(1000, 600, 1)
         self.out = nn.Conv2d(600, 1, 1)
 
+        self.m = nn.Dropout(p=0.2)
+
     def forward(self, x):
         x = x.to(device)
 
-        # (36864, 1) the sunpatch images, reshaping for avoiding a size 1 array
+        # (1, 144, 256) sunpatch image, reshaping for avoiding a size 1 array
         xA = x[-1, :, :]
-        xA = xA.reshape(1, 1, xA.shape[-2], xA.shape[-1])
-        # (36864, 7) other than sunpatch
-        xB = x[:-1, :, :].unsqueeze(0)
+        xA = xA.reshape(1, 1, xA.shape[-2], xA.shape[-1])  # (1, 1, 144, 256)
+        xO = x[-2, :, :]
+        xO = xO.reshape(1, 1, xO.shape[-2], xO.shape[-1])  # (1, 1, 144, 256)
+        # (7, 144, 256) other than sunpatch
+        xB = x[:-2, :, :].unsqueeze(0)                     # (1, n, 144, 256)
         del x
 
         xA = F.relu(self.AAconv(xA))
 
+        xO = F.relu(self.AOconv(xO))
+
         xB = F.relu(self.BBconv1(xB))
+        xB = torch.cat([xB, xO], dim=1)
+        del xO
         xB = F.relu(self.BBconv2(xB))
         xB = F.relu(self.BBconv3(xB))
         xB = F.relu(self.BBconv4(xB))
+        xB = F.relu(self.BBconv5(xB))
+        xB = F.relu(self.BBconv6(xB))
 
         xB = torch.cat([xA, xB], dim=1)
         del xA
@@ -96,9 +115,9 @@ class Model(nn.Module):
 
         return xB
 
-
+'''
 # %%
-model = Model()
+model = Model(n_features, device)
 model.to(device)
 
 print(model)
@@ -122,7 +141,7 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000009)
+optimizer = optim.Adam(model.parameters(), 0.000005)
 # model.zero_grad()   # zero the gradient buffe/rs
 
 
@@ -174,11 +193,11 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 model.eval()
-number = 152
+number = 2
 with torch.no_grad():
-    out = model(x_train[number, :, :]).to(
+    out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
-    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
+    T = y_test[number, :].to("cpu").numpy().reshape(144, -1)+0.01
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
@@ -225,7 +244,7 @@ else:
 # For transfer learning model load
 learnedView = 2
 model.load_state_dict(torch.load(
-    f'../V{learnedView}DataAnalysis/ConvModel{data_set}.pth'))
+    f'../V{learnedView}DataAnalysis/ConvModel{data_set}-2.pth'))
 
 # %%
 # Loss calculator over the train-test sets
