@@ -125,8 +125,6 @@ def TensorMaker(indices, TheTuple):
         tnsr[i, :, -1] = \
             np.loadtxt(f'../V{View}DataAnalysis/ab4/{key[x]}/{key[x]}.gz')
 
-    if features["AVGMap"]:                                        # Average
-        tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
     if features["STDmap"]:                                        # STD
         tnsr[:, :, std] = tnsr[:, :, -1].std(axis=0)
     if features["NormalMap"]:                                     # Normal map
@@ -139,9 +137,12 @@ def TensorMaker(indices, TheTuple):
         tnsr[:, :, aomp] = AOmap
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]] = \
-        minMaxScale(tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]])
+    tnsr[:, :, :7 + features["STDmap"]] = \
+        minMaxScale(tnsr[:, :, :7 + features["STDmap"]])
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)
+
+    if features["AVGMap"]:                                        # Average
+        tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
 
     return tnsr
 
