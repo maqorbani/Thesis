@@ -2,7 +2,7 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-import torch.nn.functional as F
+# import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
@@ -13,11 +13,17 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
+    'Model_Arch': 2,
     'dataset': '-NM-AO',
-    'View #': 3,
+    'View #': 5,
     'transfer learning': True,  # TL mode
-    '# samples': 50  # For transfer Learning only
+    '# samples': 100  # For transfer Learning only
 }
+
+if Dictionary['Model_Arch'] == 1:
+    from PyTorchModel import Model
+elif Dictionary['Model_Arch'] == 2:
+    from PyTorchModel import Model_2 as Model
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -58,7 +64,7 @@ x_test = np.transpose(x_test, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 
 # %%
 
-
+'''
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -109,9 +115,9 @@ class Model(nn.Module):
 
         return xB
 
-
+'''
 # %%
-model = Model()
+model = Model(n_features, device)
 model.to(device)
 
 print(model)
@@ -187,11 +193,11 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 model.eval()
-number = 152
+number = 2
 with torch.no_grad():
-    out = model(x_train[number, :, :]).to(
+    out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
-    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
+    T = y_test[number, :].to("cpu").numpy().reshape(144, -1)+0.01
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
