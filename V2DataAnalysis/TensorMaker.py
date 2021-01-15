@@ -98,7 +98,7 @@ if features["AOmap"]:
 # %%
 
 
-def TensorMaker(indices, TheTuple):
+def TensorMaker(indices, TheTuple, train_set):
     '''
     Creates the tensor ready for the DL model training and testing
     The images required for this function are 144 by 256 pixels
@@ -137,20 +137,43 @@ def TensorMaker(indices, TheTuple):
         tnsr[:, :, aomp] = AOmap
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, :7 + features["STDmap"]] = \
-        minMaxScale(tnsr[:, :, :7 + features["STDmap"]])          # map-norm
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)      # AB0, AB4
 
     if features["AVGMap"]:                                        # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
 
+    tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]] = \
+        minMaxScale(tnsr[:, :, :6 +
+                         features["AVGMap"] + features["STDmap"]], train_set)
+
     return tnsr
 
 
-def minMaxScale(tnsr):
-    for i in range(tnsr.shape[-1]):
-        tnsr[:, :, i] = (tnsr[:, :, i]-tnsr[:, :, i].min()) / \
-            (tnsr[:, :, i].max() - tnsr[:, :, i].min())
+def minMaxScale(tnsr, train_set):
+    if train_set:
+        minMax = np.zeros((tnsr.shape[-1], 2))
+        minMax[:, 0] = tnsr.min(axis=(0, 1))
+        minMax[:, 1] = tnsr.max(axis=(0, 1))
+        minMax[2, 0], minMax[2, 1] = alt.min(), alt.max()  # altitude
+        minMax[3, 0], minMax[3, 1] = azi.min(), azi.max()  # azimuth
+        minMax[4, 0], minMax[4, 1] = dire.min(), dire.max()  # direct
+        minMax[5, 0], minMax[5, 1] = dif.min(), dif.max()  # diffuse
+
+        np.save(
+            f'../V{View}DataAnalysis/data/{fileName}-{m}-minMAX-key.npy',
+            minMax)
+
+        for i in range(tnsr.shape[-1]):
+            tnsr[:, :, i] = (tnsr[:, :, i]-minMax[i, 0]) / \
+                (minMax[i, 1] - minMax[i, 0])
+
+    else:
+        minMax = np.load(
+            f'../V{View}DataAnalysis/data/{fileName}-{m}-minMAX-key.npy')
+
+        for i in range(tnsr.shape[-1]):
+            tnsr[:, :, i] = (tnsr[:, :, i]-minMax[i, 0]) / \
+                (minMax[i, 1] - minMax[i, 0])
 
     return tnsr
 
@@ -186,17 +209,15 @@ def minMaxFinder():
 
 
 # %%
-train = TensorMaker(selKeys, TheTuple)
-
-# %%
-testList = list(range(4141))
-for i in selKeys:
-    testList.remove(i)
+train = TensorMaker(selKeys, TheTuple, True)
 
 # %%
 try:
     choice = np.loadtxt(f'data/test-set-{mTest}.txt', int)
 except OSError:
+    testList = list(range(4141))
+    for i in selKeys:
+        testList.remove(i)
     choice = np.random.choice(testList, mTest)
     np.savetxt(f'data/test-set-{mTest}.txt', choice, fmt='%s', delimiter='\n')
 
@@ -209,7 +230,7 @@ plt.scatter(azi[choice], alt[choice], c='red', s=10)
 plt.show()
 
 # %%
-test = TensorMaker(choice, TheTuple)
+test = TensorMaker(choice, TheTuple, False)
 
 # %%
 np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
