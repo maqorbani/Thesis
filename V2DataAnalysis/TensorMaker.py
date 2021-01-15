@@ -144,12 +144,12 @@ def TensorMaker(indices, TheTuple, train_set):
 
     tnsr[:, :, :6 + features["AVGMap"] + features["STDmap"]] = \
         minMaxScale(tnsr[:, :, :6 +
-                         features["AVGMap"] + features["STDmap"]], train_set)
+                    features["AVGMap"] + features["STDmap"]], train_set, n)
 
     return tnsr
 
 
-def minMaxScale(tnsr, train_set):
+def minMaxScale(tnsr, train_set, n):
     if train_set:
         minMax = np.zeros((tnsr.shape[-1], 2))
         minMax[:, 0] = tnsr.min(axis=(0, 1))
@@ -160,7 +160,7 @@ def minMaxScale(tnsr, train_set):
         minMax[5, 0], minMax[5, 1] = dif.min(), dif.max()  # diffuse
 
         np.save(
-            f'../V{View}DataAnalysis/data/{fileName}-{m}-minMAX-key.npy',
+            f'../V{View}DataAnalysis/data/{fileName}-{n}-minMAX-key.npy',
             minMax)
 
         for i in range(tnsr.shape[-1]):
