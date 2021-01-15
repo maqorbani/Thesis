@@ -5,6 +5,7 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
+from sklearn.utils import shuffle
 
 from piq import psnr, ssim
 
@@ -12,14 +13,17 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '-NM-AO',
-    'Model_Arch': 2,
-    'View #': 5,
-    'transfer learning': True,  # TL mode
-    '# samples': 75  # For transfer Learning only
+    'dataset': '-NM-D',
+    'Model_Arch': 1,
+    'View #': 2,
+    'avg_shuffle': False,        # Shuffle mode
+    'avg_dividion': 125,         # For shuffle mode only
+    'transfer learning': False,  # TL mode
+    '# samples': 75              # For transfer Learning only
 }
 
 arch = Dictionary['Model_Arch']
+divAvg = Dictionary['avg_dividion']
 
 if arch == 1:
     from PyTorchModel import Model
@@ -52,6 +56,7 @@ else:
 n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
 mTest = x_test.shape[0]
+
 # %%
 # Transforming the data into torch tensors.
 x_train, y_train = torch.tensor(x_train[:, :, :n_features]), \
@@ -64,6 +69,7 @@ x_train = np.transpose(x_train, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 x_test = np.transpose(x_test, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 
 # %%
+# Load the model from PyTorchModel.py to the GPU
 model = Model(n_features, device)
 model.to(device)
 
@@ -80,20 +86,30 @@ torch.cuda.empty_cache()
 gpu_usage()
 
 # %%
-epochLoss = []
 criterion = nn.MSELoss()
+epochLoss = []
 testLoss = []
 
 epochLossBatch = []
 testLossBatch = []
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000005)
-# model.zero_grad()   # zero the gradient buffe/rs
+
+
+def avg_shuffle(x, y):
+    x, y = shuffle(x, y)
+    for i in range(x.shape[0] // divAvg):
+        x[i*divAvg: (i+1)*divAvg, 6] =\
+            (y[i*divAvg: (i+1)*divAvg].sum(axis=0) / divAvg).reshape(144, -1)
+
+    return x, y
 
 
 # %%
+optimizer = optim.Adam(model.parameters(), 0.000001)
+# model.zero_grad()   # zero the gradient buffers
 
+# %%
 epochPercent = 0  # Dummy variable, just for printing purposes
 model.train()
 
@@ -128,6 +144,9 @@ for i in range(epoch*m):
         epochLossBatch = []
         testLossBatch = []
 
+        if Dictionary['avg_shuffle']:
+            x_train, y_train = avg_shuffle(x_train, y_train)
+
 # %%
 plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
@@ -140,7 +159,7 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 model.eval()
-number = 2
+number = 25
 with torch.no_grad():
     out = model(x_test[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
