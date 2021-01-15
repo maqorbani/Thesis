@@ -19,6 +19,7 @@ features = {
     "View_Number": 2,
     "Number of samples": 250,
     "Number of test": 400,
+    "Transfer Learning mode": False,
     "Transfer Learning": [25, 125, 25]  # Transfer learning mode only
 }
 
@@ -238,15 +239,25 @@ np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
 
 # %%
 # TRANSFER LEARNING DATASET CREATOR!
-a, b, c = features["Transfer Learning"]
-TLsamples = np.arange(a, b, c)
 
-choice = np.random.choice(range(4141), mTest)
-test = TensorMaker(choice, TheTuple)
+if features["Transfer Learning mode"]:
+    a, b, c = features["Transfer Learning"]
+    TLsamples = np.arange(a, b, c)
 
-for i in TLsamples:
-    selKeys = np.loadtxt(f'data/results{i}.txt')
-    selKeys = [int(i) for i in selKeys]
-    train = TensorMaker(selKeys, TheTuple)
-    np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
-                        fileName+f'-{i}.npz', train=train, test=test)
+    try:
+        choice = np.loadtxt(f'data/test-set-{mTest}.txt', int)
+    except OSError:
+        testList = list(range(4141))
+        for i in selKeys:
+            testList.remove(i)
+        choice = np.random.choice(testList, mTest)
+        np.savetxt(f'data/test-set-{mTest}.txt',
+                   choice, fmt='%s', delimiter='\n')
+
+    for i in TLsamples:
+        selKeys = np.loadtxt(f'data/results{i}.txt')
+        selKeys = [int(i) for i in selKeys]
+        train = TensorMaker(selKeys, TheTuple, True)
+        test = TensorMaker(choice, TheTuple, False)
+        np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
+                            fileName+f'-{i}.npz', train=train, test=test)
