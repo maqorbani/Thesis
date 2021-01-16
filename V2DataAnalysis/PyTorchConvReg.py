@@ -27,8 +27,10 @@ divAvg = Dictionary['avg_dividion']
 
 if arch == 1:
     from PyTorchModel import Model
-else:
+elif arch == 2:
     from PyTorchModel import Model_2 as Model
+else:
+    from PyTorchModel import Model_3 as Model
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
