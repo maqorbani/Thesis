@@ -16,10 +16,10 @@ features = {
     "DepthMap": False,
     "ReflectionMap": False,
     "AOmap": True,
-    "View_Number": 2,
+    "View_Number": 5,
     "Number of samples": 250,
     "Number of test": 400,
-    "Transfer Learning mode": False,
+    "Transfer Learning mode": True,
     "Transfer Learning": [25, 125, 25]  # Transfer learning mode only
 }
 
@@ -164,17 +164,13 @@ def minMaxScale(tnsr, train_set, n):
             f'../V{View}DataAnalysis/data/{fileName}-{n}-minMAX-key.npy',
             minMax)
 
-        for i in range(tnsr.shape[-1]):
-            tnsr[:, :, i] = (tnsr[:, :, i]-minMax[i, 0]) / \
-                (minMax[i, 1] - minMax[i, 0])
-
     else:
         minMax = np.load(
             f'../V{View}DataAnalysis/data/{fileName}-{m}-minMAX-key.npy')
 
-        for i in range(tnsr.shape[-1]):
-            tnsr[:, :, i] = (tnsr[:, :, i]-minMax[i, 0]) / \
-                (minMax[i, 1] - minMax[i, 0])
+    for i in range(tnsr.shape[-1]):
+        tnsr[:, :, i] = (tnsr[:, :, i]-minMax[i, 0]) / \
+            (minMax[i, 1] - minMax[i, 0])
 
     return tnsr
 
@@ -255,6 +251,7 @@ if features["Transfer Learning mode"]:
                    choice, fmt='%s', delimiter='\n')
 
     for i in TLsamples:
+        m = i  # m says which minMAX key, minMaxScale function shoud read
         selKeys = np.loadtxt(f'data/results{i}.txt')
         selKeys = [int(i) for i in selKeys]
         train = TensorMaker(selKeys, TheTuple, True)
