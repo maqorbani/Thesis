@@ -76,6 +76,12 @@ model.to(device)
 print(model)
 gpu_usage()
 
+# For transfer learning model load
+if TLmode:
+    learnedView = 2
+    model.load_state_dict(torch.load(
+        f'../V{learnedView}DataAnalysis/ConvModel{data_set}-{arch}.pth'))
+
 # %%
 with torch.no_grad():
     out = model(x_train[3, :, :, :])
