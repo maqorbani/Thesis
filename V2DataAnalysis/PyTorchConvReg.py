@@ -118,6 +118,10 @@ optimizer = optim.Adam(model.parameters(), 0.000001)
 # model.zero_grad()   # zero the gradient buffers
 
 # %%
+# To change the learning rate
+optimizer.param_groups[0]['lr'] = 0.000005
+
+# %%
 epochPercent = 0  # Dummy variable, just for printing purposes
 model.train()
 
