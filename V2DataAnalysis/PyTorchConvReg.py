@@ -202,12 +202,15 @@ ax3.title.set_text('difference')
 
 plt.show()
 # %%
-if not TLmode:
-    torch.save(model.state_dict(),
-               f'../V{View}DataAnalysis/ConvModel{data_set}-{arch}.pth')
-else:
-    torch.save(model.state_dict(),
-               f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth')
+answer = input("Are you sure that you want to save? [yes/any]")
+
+if answer == 'yes':
+    if not TLmode:
+        torch.save(model.state_dict(),
+                   f'../V{View}DataAnalysis/ConvModel{data_set}-{arch}.pth')
+    else:
+        torch.save(model.state_dict(),
+                   f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth')
 
 
 # %%
