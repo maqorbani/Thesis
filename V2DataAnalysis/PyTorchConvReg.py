@@ -102,6 +102,9 @@ epochLossBatch = []
 testLossBatch = []
 
 # %%
+if Dictionary['avg_shuffle']:
+    minMax = np.load(
+        f'../V{View}DataAnalysis/data/{data_set}-{m}-minMAX-key.npy')
 
 
 def avg_shuffle(x, y):
@@ -109,6 +112,8 @@ def avg_shuffle(x, y):
     for i in range(x.shape[0] // divAvg):
         x[i*divAvg: (i+1)*divAvg, 6] =\
             (y[i*divAvg: (i+1)*divAvg].sum(axis=0) / divAvg).reshape(144, -1)
+
+    x[:, 6] = (x[:, 6] - minMax[6, 0]) / (minMax[6, 1] - minMax[6, 0])
 
     return x, y
 
