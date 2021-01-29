@@ -17,20 +17,22 @@ Dictionary = {
     'Model_Arch': 1,
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
-    'avg_dividion': 125,         # For shuffle mode only
+    'avg_division': 125,         # For shuffle mode only
     'transfer learning': False,  # TL mode
     '# samples': 75              # For transfer Learning only
 }
 
 arch = Dictionary['Model_Arch']
-divAvg = Dictionary['avg_dividion']
+divAvg = Dictionary['avg_division']
 
 if arch == 1:
-    from PyTorchModel import Model
+    from PyTorchModel import Model             # As proposed in the paper
 elif arch == 2:
-    from PyTorchModel import Model_2 as Model
+    from PyTorchModel import Model_2 as Model  # Has a branch for AO-map
+elif arch == 3:
+    from PyTorchModel import Model_3 as Model  # Has a branch for AO like arch2
 else:
-    from PyTorchModel import Model_3 as Model
+    from PyTorchModel import Model_4 as Model  # Does not have extra branch
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
