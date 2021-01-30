@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from GPUtil import showUtilization as gpu_usage
 from sklearn.utils import shuffle
+import cv2
 
 from piq import psnr, ssim
 
@@ -13,17 +14,19 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '-NM-D',
-    'Model_Arch': 1,
+    'dataset': '-NM-AO',
+    'Model_Arch': 2,
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
-    'avg_division': 125,         # For shuffle mode only
+    'avg_division': 50,          # For shuffle mode only
     'transfer learning': False,  # TL mode
-    '# samples': 75              # For transfer Learning only
+    '# samples': 75,             # For transfer Learning only
+    '# NeighborPx': 1            # For model 3 and 4 px neighborhood
 }
 
 arch = Dictionary['Model_Arch']
 divAvg = Dictionary['avg_division']
+pxNeighbor = Dictionary['# NeighborPx']
 
 if arch == 1:
     from PyTorchModel import Model             # As proposed in the paper
@@ -31,8 +34,10 @@ elif arch == 2:
     from PyTorchModel import Model_2 as Model  # Has a branch for AO-map
 elif arch == 3:
     from PyTorchModel import Model_3 as Model  # Has a branch for AO like arch2
-else:
+elif arch == 4:
     from PyTorchModel import Model_4 as Model  # Does not have extra branch
+else:
+    from PyTorchModel import Model_5 as Model  # ConvNet 3*3 for NM only
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -61,6 +66,10 @@ n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
 mTest = x_test.shape[0]
 
+modelArgs = [n_features, device]
+if arch in (3, 4):
+    modelArgs.append(pxNeighbor)
+
 # %%
 # Transforming the data into torch tensors.
 x_train, y_train = torch.tensor(x_train[:, :, :n_features]), \
@@ -74,7 +83,7 @@ x_test = np.transpose(x_test, [0, 2, 1]).reshape(-1, n_features, 144, 256)
 
 # %%
 # Load the model from PyTorchModel.py to the GPU
-model = Model(n_features, device)
+model = Model(*modelArgs)
 model.to(device)
 
 print(model)
@@ -121,12 +130,12 @@ def avg_shuffle(x, y):
 
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.000001)
+optimizer = optim.Adam(model.parameters(), 0.00005)
 # model.zero_grad()   # zero the gradient buffers
 
 # %%
 # To change the learning rate
-optimizer.param_groups[0]['lr'] = 0.000005
+optimizer.param_groups[0]['lr'] = 0.00001
 
 # %%
 epochPercent = 0  # Dummy variable, just for printing purposes
@@ -177,12 +186,12 @@ plt.plot(np.log10(a), lw=4)
 
 plt.show()
 # %%
-model.eval()
-number = 25
+# model.eval()
+number = 152
 with torch.no_grad():
-    out = model(x_test[number, :, :]).to(
+    out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
-    T = y_test[number, :].to("cpu").numpy().reshape(144, -1)+0.01
+    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
@@ -192,7 +201,7 @@ ax1.imshow(np.log10(out))
 ax1.title.set_text(f'{number}\nprediction')
 ax2.imshow(np.log10(T))
 ax2.title.set_text('ground_truth')
-ax3.imshow(np.abs(out-T), vmax=0.2)
+ax3.imshow(np.log10(np.abs(out-T)))
 ax3.title.set_text('difference')
 # plt.imshow((y_train[5, :].to("cpu").detach().numpy().reshape(144, -1))
 #            - (out.to("cpu").detach().numpy().reshape(144, -1)), vmax=0.67)
@@ -286,3 +295,7 @@ print(sum(test_ssim)/mTest)
 print('PSNR')
 print(sum(train_psnr)/m)
 print(sum(test_psnr)/mTest)
+
+# %%
+
+cv2.imwrite('out.HDR', out)
