@@ -44,15 +44,21 @@ key = np.loadtxt('key.txt', dtype='str')
 print(len(alt), len(azi), len(dire), len(dif))
 
 # %%
-plt.scatter(azi, alt, s=10)
+fig, ax1 = plt.subplots(1, figsize=(12, 8))
+plt.scatter(azi, alt, c=dire, s=dif/5)
 plt.xlabel('azimuth')
 plt.ylabel('altitude')
+plt.colorbar(label='color shows directs radiation')
+plt.legend(["Scale shows diffuse radiation"])
 plt.show()
 
 # %%
-plt.scatter(dire, dif, s=10)
+fig, ax1 = plt.subplots(1, figsize=(12, 8))
+plt.scatter(dire, dif, c=alt, s=15)
 plt.xlabel('direct radiation')
 plt.ylabel('diffuse radiation')
+plt.colorbar()
+plt.legend(["Color shows the altitude of sun"])
 plt.show()
 
 # %%
@@ -60,7 +66,7 @@ sunData = np.vstack((alt, azi, dire, dif)).T
 
 # %%
 # Run the K-means algorithm to cluster data into k groups.
-k = 250
+k = 200
 kmeans = KMeans(n_clusters=k, max_iter=9000).fit(sunData)
 
 # %%
