@@ -7,11 +7,15 @@ import io
 import numpy as np
 import concurrent.futures
 
-os.chdir('EastV3/')
-nCPU = 20
+# %%
+os.chdir('V2SouthAB0/')
+# %%
+nCPU = 32
 HDRs = os.listdir()
 divisionCPU = len(HDRs) // nCPU
 HDRsDict = {}
+
+minMaxDict = {i: [100, 0] for i in range(nCPU)}
 
 for i in range(nCPU):
     HDRsDict['HDR'+str(i)] = HDRs[i*divisionCPU:divisionCPU*(i+1)]
@@ -21,11 +25,13 @@ for i, HDR in enumerate(HDRs[nCPU * divisionCPU:]):
 
 badDirs = []
 
+
 # %%
-def tensorExtractor(hdrs):
+def tensorExtractor(hdrs, index):
     for hdr in hdrs:
-        print(os.getcwd())
-        if os.system(f'pvalue -h -d -H -b {hdr}/{hdr}_1.HDR > {hdr}/{hdr}.txt'):
+        # print(os.getcwd())
+        if os.system(
+                f'pvalue -h -d -H -b -o {hdr}/{hdr}_1.HDR > {hdr}/{hdr}.txt'):
             print(hdr, ' is bad image.')
             badDirs.append(hdr)
             os.remove(f'{hdr}/{hdr}.txt')
@@ -33,21 +39,29 @@ def tensorExtractor(hdrs):
         else:
             print(hdr)
         with io.open(f'{hdr}/{hdr}.txt', 'r', encoding=None) as f:
-            np.savetxt(f'{hdr}/{hdr}.gz', np.loadtxt(f, delimiter='\n'))
+            vector = np.loadtxt(f, delimiter='\n')
+            MIN, MAX = vector.min(), vector.max()
+            if MIN < minMaxDict[index][0]:
+                minMaxDict[index][0] = MIN
+            if MAX > minMaxDict[index][1]:
+                minMaxDict[index][1] = MAX
+            np.savetxt(f'{hdr}/{hdr}.gz', vector)
         os.remove(f'{hdr}/{hdr}.txt')
 
 
 # tensorExtractor(os.listdir())
 with concurrent.futures.ThreadPoolExecutor() as exec:
-    res = [exec.submit(tensorExtractor, HDRsDict['HDR'+str(i)]) for i in range(nCPU)]
+    res = [exec.submit(tensorExtractor, HDRsDict['HDR'+str(i)], i)
+           for i in range(nCPU)]
 
 # %%
-os.chdir('../')
+# os.chdir('../')
 # %%
 with open('badDirs.txt', 'w') as f:
     # [f.write(i + ',') for i in badDirs]
     f.write(', '.join(badDirs))
 
+'''
 # %%
 with open('skyResearch/key.txt', 'r') as f:
     keys = f.read()
@@ -61,3 +75,4 @@ for bad in badDirs:
 
 with open('skiesToCreate.txt', 'w') as f:
     [f.write(i + ',') for i in goodie]
+'''
