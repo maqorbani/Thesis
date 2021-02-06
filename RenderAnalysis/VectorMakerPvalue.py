@@ -55,6 +55,15 @@ with concurrent.futures.ThreadPoolExecutor() as exec:
            for i in range(nCPU)]
 
 # %%
+# minMax to numpy here
+minMax = np.array(list(minMaxDict.values()))
+MIN = minMax[:, 0].min()
+MAX = minMax[:, 1].max()
+
+with open('min-max.txt', 'w') as f:
+    f.write(f'{MIN}, {MAX}')
+
+# %%
 # os.chdir('../')
 # %%
 with open('badDirs.txt', 'w') as f:
