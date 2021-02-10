@@ -14,8 +14,8 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '-NM-AO',
-    'Model_Arch': 2,
+    'dataset': '',
+    'Model_Arch': 6,
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
@@ -36,8 +36,10 @@ elif arch == 3:
     from PyTorchModel import Model_3 as Model  # Has a branch for AO like arch2
 elif arch == 4:
     from PyTorchModel import Model_4 as Model  # Does not have extra branch
-else:
+elif arch == 5:
     from PyTorchModel import Model_5 as Model  # ConvNet 3*3 for NM only
+else:
+    from PyTorchModel import Model_6 as Model  # The inception nwtwork idea
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -93,7 +95,8 @@ gpu_usage()
 if TLmode:
     learnedView = 2
     model.load_state_dict(torch.load(
-        f'../V{learnedView}DataAnalysis/ConvModel{data_set}-{arch}.pth'))
+        f'../V{learnedView}DataAnalysis/models/\
+            ConvModel{data_set}-{arch}.pth'))
 
 # %%
 with torch.no_grad():
@@ -135,7 +138,7 @@ optimizer = optim.Adam(model.parameters(), 0.00005)
 
 # %%
 # To change the learning rate
-optimizer.param_groups[0]['lr'] = 0.00001
+optimizer.param_groups[0]['lr'] = 0.000001
 
 # %%
 epochPercent = 0  # Dummy variable, just for printing purposes
@@ -187,7 +190,7 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 # model.eval()
-number = 152
+number = 151
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -223,25 +226,27 @@ answer = input("Are you sure that you want to save? [yes/any]")
 if answer == 'yes':
     if not TLmode:
         torch.save(model.state_dict(),
-                   f'../V{View}DataAnalysis/ConvModel{data_set}-{arch}.pth')
+                   f'../V{View}DataAnalysis/models/\
+                       ConvModel{data_set}-{arch}.pth')
     else:
         torch.save(model.state_dict(),
-                   f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth')
+                   f'../V{View}DataAnalysis/models/\
+                       ConvModel{data_set}-{mTL}.pth')
 
 
 # %%
 if not TLmode:
     model.load_state_dict(torch.load(
-        f'../V{View}DataAnalysis/ConvModel{data_set}-{arch}.pth'))
+        f'../V{View}DataAnalysis/models/ConvModel{data_set}-{arch}.pth'))
 else:
     model.load_state_dict(torch.load(
-        f'../V{View}DataAnalysis/ConvModel{data_set}-{mTL}.pth'))
+        f'../V{View}DataAnalysis/models/ConvModel{data_set}-{mTL}.pth'))
 
 # %%
 # For transfer learning model load
 learnedView = 2
 model.load_state_dict(torch.load(
-    f'../V{learnedView}DataAnalysis/ConvModel{data_set}-{arch}.pth'))
+    f'../V{learnedView}DataAnalysis/models/ConvModel{data_set}-{arch}.pth'))
 
 # %%
 # Loss calculator over the train-test sets

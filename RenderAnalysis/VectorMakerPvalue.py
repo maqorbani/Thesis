@@ -8,7 +8,7 @@ import numpy as np
 import concurrent.futures
 
 # %%
-os.chdir('V2SouthAB0/')
+os.chdir('Octs')
 # %%
 nCPU = 32
 HDRs = os.listdir()
