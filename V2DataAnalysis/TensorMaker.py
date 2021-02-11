@@ -15,11 +15,11 @@ features = {
     "NormalMap": True,
     "DepthMap": False,
     "ReflectionMap": False,
-    "AOmap": True,
-    "View_Number": 5,
-    "Number of samples": 250,
+    "AOmap": False,
+    "View_Number": 2,
+    "Number of samples": 200,
     "Number of test": 400,
-    "Transfer Learning mode": True,
+    "Transfer Learning mode": False,
     "Transfer Learning": [25, 125, 25]  # Transfer learning mode only
 }
 
@@ -107,7 +107,7 @@ def TensorMaker(indices, TheTuple, train_set):
     therefore alt,azi,dire,dif and key are available in the memory
     n is the number of samples in the desired tensor
     '''
-    n = len(indices)
+    n = len(indices)  # if train set: n = m else, m = n of train set
     tnsr = np.zeros((n, 36864, n_axes))
 
     #                                                             # X, Y
@@ -138,7 +138,13 @@ def TensorMaker(indices, TheTuple, train_set):
         tnsr[:, :, aomp] = AOmap
 
     tnsr = tnsr.astype('float32')
-    tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], TheTuple)      # AB0, AB4
+
+    tnsr[:, :, -1] = np.log10(tnsr[:, :, -1])                     # Normalize
+
+    Tuples = np.array(TheTuple)
+    Tuples[2:] = np.log10(Tuples[2:])
+
+    tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], Tuples)        # AB0, AB4
 
     if features["AVGMap"]:                                        # Average
         tnsr[:, :, avg] = tnsr[:, :, -1].sum(axis=0) / n
