@@ -14,8 +14,8 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '',
-    'Model_Arch': 6,
+    'dataset': '-NM',
+    'Model_Arch': 'UNet',
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
@@ -28,7 +28,9 @@ arch = Dictionary['Model_Arch']
 divAvg = Dictionary['avg_division']
 pxNeighbor = Dictionary['# NeighborPx']
 
-if arch == 1:
+if arch == 'UNet':
+    from unet import UNet as Model             # UNet model
+elif arch == 1:
     from PyTorchModel import Model             # As proposed in the paper
 elif arch == 2:
     from PyTorchModel import Model_2 as Model  # Has a branch for AO-map
@@ -68,7 +70,7 @@ n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
 mTest = x_test.shape[0]
 
-modelArgs = [n_features, device]
+modelArgs = [n_features, 1, device] if arch == 'UNet' else [n_features, device]
 if arch in (3, 4):
     modelArgs.append(pxNeighbor)
 
@@ -107,6 +109,13 @@ with torch.no_grad():
 torch.cuda.empty_cache()
 gpu_usage()
 
+
+# %%
+def rer_loss(output, target):
+    loss = torch.sqrt(torch.sum((output - target)**2) / torch.sum(target**2))
+    return loss
+
+
 # %%
 criterion = nn.MSELoss()
 epochLoss = []
@@ -133,12 +142,12 @@ def avg_shuffle(x, y):
 
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.00005)
+optimizer = optim.Adam(model.parameters(), 0.0001)
 # model.zero_grad()   # zero the gradient buffers
 
 # %%
 # To change the learning rate
-optimizer.param_groups[0]['lr'] = 0.000001
+optimizer.param_groups[0]['lr'] = 0.00001
 
 # %%
 epochPercent = 0  # Dummy variable, just for printing purposes
@@ -190,7 +199,7 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 # model.eval()
-number = 151
+number = 157
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -200,11 +209,11 @@ with torch.no_grad():
 
 # Plotting both prediction and target images
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(40, 10))
-ax1.imshow(np.log10(out))
+ax1.imshow(out)
 ax1.title.set_text(f'{number}\nprediction')
-ax2.imshow(np.log10(T))
+ax2.imshow(T)
 ax2.title.set_text('ground_truth')
-ax3.imshow(np.log10(np.abs(out-T)))
+ax3.imshow(np.abs(out-T))
 ax3.title.set_text('difference')
 # plt.imshow((y_train[5, :].to("cpu").detach().numpy().reshape(144, -1))
 #            - (out.to("cpu").detach().numpy().reshape(144, -1)), vmax=0.67)
@@ -226,12 +235,12 @@ answer = input("Are you sure that you want to save? [yes/any]")
 if answer == 'yes':
     if not TLmode:
         torch.save(model.state_dict(),
-                   f'../V{View}DataAnalysis/models/\
-                       ConvModel{data_set}-{arch}.pth')
+                   f'../V{View}DataAnalysis/models/' +
+                   f'ConvModel{data_set}-{arch}.pth')
     else:
         torch.save(model.state_dict(),
-                   f'../V{View}DataAnalysis/models/\
-                       ConvModel{data_set}-{mTL}.pth')
+                   f'../V{View}DataAnalysis/models/' +
+                   f'ConvModel{data_set}-{mTL}.pth')
 
 
 # %%
