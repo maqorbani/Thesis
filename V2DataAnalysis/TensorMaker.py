@@ -12,7 +12,7 @@ from PIL import Image
 features = {
     "AVGMap": True,
     "STDmap": False,
-    "NormalMap": True,
+    "NormalMap": False,
     "DepthMap": False,
     "ReflectionMap": False,
     "AOmap": False,
@@ -139,9 +139,11 @@ def TensorMaker(indices, TheTuple, train_set):
 
     tnsr = tnsr.astype('float32')
 
+    tnsr[:, :, -2] = np.log10(tnsr[:, :, -2]+1e-1)                # Normalize
     tnsr[:, :, -1] = np.log10(tnsr[:, :, -1])                     # Normalize
 
     Tuples = np.array(TheTuple)
+    Tuples[:2] = np.log10(Tuples[:2]+1e-1)
     Tuples[2:] = np.log10(Tuples[2:])
 
     tnsr[:, :, -2:] = forceMinMax(tnsr[:, :, -2:], Tuples)        # AB0, AB4
@@ -161,10 +163,10 @@ def minMaxScale(tnsr, train_set, n):
         minMax = np.zeros((tnsr.shape[-1], 2))
         minMax[:, 0] = tnsr.min(axis=(0, 1))
         minMax[:, 1] = tnsr.max(axis=(0, 1))
-        minMax[2, 0], minMax[2, 1] = alt.min(), alt.max()  # altitude
-        minMax[3, 0], minMax[3, 1] = azi.min(), azi.max()  # azimuth
+        minMax[2, 0], minMax[2, 1] = alt.min(), alt.max()    # altitude
+        minMax[3, 0], minMax[3, 1] = azi.min(), azi.max()    # azimuth
         minMax[4, 0], minMax[4, 1] = dire.min(), dire.max()  # direct
-        minMax[5, 0], minMax[5, 1] = dif.min(), dif.max()  # diffuse
+        minMax[5, 0], minMax[5, 1] = dif.min(), dif.max()    # diffuse
 
         np.save(
             f'../V{View}DataAnalysis/data/{fileName}-{n}-minMAX-key.npy',
