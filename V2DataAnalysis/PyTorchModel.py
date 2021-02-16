@@ -320,3 +320,50 @@ class Model_6(nn.Module):
         xB = F.relu(self.out(xB))
 
         return xB
+
+
+class DenseBlock(nn.Module):
+    """Inception based, denseNet block"""
+
+    def __init__(self, in_channels):
+        super().__init__()
+        self.in_channels = in_channels
+
+        self.Conv1 = nn.Conv2d(self.in_channels, 128, 1, padding=0)
+        self.Conv2 = nn.Conv2d(self.in_channels, 64, 3, padding=1)
+        self.Conv3 = nn.Conv2d(self.in_channels, 64, 5, padding=2)
+
+    def forward(self, x):
+        x1 = self.Conv1(x)
+        x2 = self.Conv2(x)
+        x3 = self.Conv3(x)
+        return F.relu(torch.cat([x1, x2, x3], dim=1))
+
+
+class DenseNet(nn.Module):
+    '''
+    DenseNet architecture
+    '''
+
+    def __init__(self, n_features, device):
+        super(DenseNet, self).__init__()
+        self.n_features = n_features
+        self.device = device
+
+        self.AA = DenseBlock(self.n_features)
+        self.BB = DenseBlock(self.n_features + 256*1)
+        self.CC = DenseBlock(self.n_features + 256*2)
+        self.DD = DenseBlock(self.n_features + 256*3)
+
+        self.out = nn.Conv2d(self.n_features + 256*4, 1, 1)
+
+    def forward(self, x):
+        x = x.to(self.device).unsqueeze(0)
+
+        x1 = self.AA(x)
+        x2 = self.BB(torch.cat([x, x1], dim=1))
+        x3 = self.CC(torch.cat([x, x1, x2], dim=1))
+        x4 = self.DD(torch.cat([x, x1, x2, x3], dim=1))
+        x5 = F.relu(self.out(torch.cat([x, x1, x2, x3, x4], dim=1)))
+
+        return x5
