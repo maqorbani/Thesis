@@ -1,4 +1,5 @@
 # %%
+import time
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -14,8 +15,8 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '-NM',
-    'Model_Arch': 'UNet',
+    'dataset': '',
+    'Model_Arch': 'DenseNet',
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
@@ -29,19 +30,21 @@ divAvg = Dictionary['avg_division']
 pxNeighbor = Dictionary['# NeighborPx']
 
 if arch == 'UNet':
-    from unet import UNet as Model             # UNet model
+    from unet import UNet as Model              # UNet model
+elif arch == 'DenseNet':
+    from PyTorchModel import DenseNet as Model  # DenseNet model
 elif arch == 1:
-    from PyTorchModel import Model             # As proposed in the paper
+    from PyTorchModel import Model              # As proposed in the paper
 elif arch == 2:
-    from PyTorchModel import Model_2 as Model  # Has a branch for AO-map
+    from PyTorchModel import Model_2 as Model   # Has a branch for AO-map
 elif arch == 3:
-    from PyTorchModel import Model_3 as Model  # Has a branch for AO like arch2
+    from PyTorchModel import Model_3 as Model   # Has a branch for AO like #2
 elif arch == 4:
-    from PyTorchModel import Model_4 as Model  # Does not have extra branch
+    from PyTorchModel import Model_4 as Model   # Does not have extra branch
 elif arch == 5:
-    from PyTorchModel import Model_5 as Model  # ConvNet 3*3 for NM only
+    from PyTorchModel import Model_5 as Model   # ConvNet 3*3 for NM only
 else:
-    from PyTorchModel import Model_6 as Model  # The inception nwtwork idea
+    from PyTorchModel import Model_6 as Model   # The inception nwtwork idea
 
 # %%
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -147,9 +150,11 @@ optimizer = optim.Adam(model.parameters(), 0.0001)
 
 # %%
 # To change the learning rate
-optimizer.param_groups[0]['lr'] = 0.00001
+optimizer.param_groups[0]['lr'] = 0.00005
 
 # %%
+a = time.time()
+
 epochPercent = 0  # Dummy variable, just for printing purposes
 model.train()
 
@@ -187,6 +192,7 @@ for i in range(epoch*m):
         if Dictionary['avg_shuffle']:
             x_train, y_train = avg_shuffle(x_train, y_train)
 
+print(f'\nIn {time.time() - a:.2f} Seconds')
 # %%
 plt.plot(np.log10(epochLoss))
 plt.plot(np.log10(testLoss))
@@ -199,7 +205,7 @@ plt.plot(np.log10(a), lw=4)
 plt.show()
 # %%
 # model.eval()
-number = 157
+number = 156
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
         "cpu").numpy().reshape(144, -1)+0.01
@@ -259,6 +265,8 @@ model.load_state_dict(torch.load(
 
 # %%
 # Loss calculator over the train-test sets
+a = time.time()
+
 train_loss = []
 test_loss = []
 
@@ -279,7 +287,10 @@ with torch.no_grad():
 print(sum(train_loss)/m)
 print(sum(test_loss)/mTest)
 
+print(f'\nIn {time.time() - a:.2f} Seconds')
 # %%
+a = time.time()
+
 train_ssim = []
 test_ssim = []
 train_psnr = []
@@ -310,6 +321,7 @@ print('PSNR')
 print(sum(train_psnr)/m)
 print(sum(test_psnr)/mTest)
 
+print(f'\nIn {time.time() - a:.2f} Seconds')
 # %%
 
 cv2.imwrite('out.HDR', out)
