@@ -16,7 +16,7 @@ Dictionary = {
     'epoch': 5,
     'batch': 8,
     'dataset': '',
-    'Model_Arch': 'DenseNet',
+    'Model_Arch': 1,
     'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
@@ -146,7 +146,9 @@ def avg_shuffle(x, y):
 
 # %%
 optimizer = optim.Adam(model.parameters(), 0.0001)
-# model.zero_grad()   # zero the gradient buffers
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', 0.5, 3,
+                                                 verbose=True, threshold=1e-5,
+                                                 cooldown=5)
 
 # %%
 # To change the learning rate
@@ -184,10 +186,13 @@ for i in range(epoch*m):
         epochPercent += 1
 
     if i % m == m - 1:
-        print('\n', "-->>Train>>", sum(epochLossBatch)/m)
+        epochLossBatchAvg = sum(epochLossBatch)/m
+        print('\n', "-->>Train>>", epochLossBatchAvg)
         print("-->>Test>>", sum(testLossBatch)/m)
         epochLossBatch = []
         testLossBatch = []
+
+        scheduler.step(epochLossBatchAvg)
 
         if Dictionary['avg_shuffle']:
             x_train, y_train = avg_shuffle(x_train, y_train)
