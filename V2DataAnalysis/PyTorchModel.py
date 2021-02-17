@@ -329,11 +329,15 @@ class DenseBlock(nn.Module):
         super().__init__()
         self.in_channels = in_channels
 
-        self.Conv1 = nn.Conv2d(self.in_channels, 128, 1, padding=0)
-        self.Conv2 = nn.Conv2d(self.in_channels, 64, 3, padding=1)
-        self.Conv3 = nn.Conv2d(self.in_channels, 64, 5, padding=2)
+        self.Conv0 = nn.Conv2d(self.in_channels, 128, 1)
+
+        self.Conv1 = nn.Conv2d(128, 128, 1, padding=0)
+        self.Conv2 = nn.Conv2d(128, 64, 3, padding=1)
+        self.Conv3 = nn.Conv2d(128, 64, 5, padding=2)
 
     def forward(self, x):
+        x = self.Conv0(x)  # Network in network bottleneck output: 128
+
         x1 = self.Conv1(x)
         x2 = self.Conv2(x)
         x3 = self.Conv3(x)
