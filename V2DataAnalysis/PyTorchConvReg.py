@@ -15,13 +15,13 @@ from piq import psnr, ssim
 Dictionary = {
     'epoch': 5,
     'batch': 8,
-    'dataset': '',
-    'Model_Arch': 1,
-    'View #': 2,
+    'dataset': '-NM',
+    'Model_Arch': 'UNet',
+    'View #': 5,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
-    'transfer learning': False,  # TL mode
-    '# samples': 75,             # For transfer Learning only
+    'transfer learning': True,  # TL mode
+    '# samples': 25,             # For transfer Learning only
     '# NeighborPx': 1            # For model 3 and 4 px neighborhood
 }
 
@@ -95,13 +95,14 @@ model.to(device)
 
 print(model)
 gpu_usage()
+print('\nNumber Of parameters:', sum(p.numel() for p in model.parameters()))
 
 # For transfer learning model load
 if TLmode:
     learnedView = 2
     model.load_state_dict(torch.load(
-        f'../V{learnedView}DataAnalysis/models/\
-            ConvModel{data_set}-{arch}.pth'))
+        f'../V{learnedView}DataAnalysis/models/' +
+        f'ConvModel{data_set}-{arch}.pth'))
 
 # %%
 with torch.no_grad():
@@ -145,14 +146,14 @@ def avg_shuffle(x, y):
 
 
 # %%
-optimizer = optim.Adam(model.parameters(), 0.0001)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', 0.5, 3,
-                                                 verbose=True, threshold=1e-5,
+optimizer = optim.Adam(model.parameters(), 0.001)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', 0.5, 2,
+                                                 verbose=True, threshold=1e-4,
                                                  cooldown=5)
 
 # %%
 # To change the learning rate
-optimizer.param_groups[0]['lr'] = 0.00005
+optimizer.param_groups[0]['lr'] = 0.00001
 
 # %%
 a = time.time()
@@ -251,7 +252,7 @@ if answer == 'yes':
     else:
         torch.save(model.state_dict(),
                    f'../V{View}DataAnalysis/models/' +
-                   f'ConvModel{data_set}-{mTL}.pth')
+                   f'ConvModel{data_set}-{arch}-{mTL}.pth')
 
 
 # %%
@@ -260,7 +261,7 @@ if not TLmode:
         f'../V{View}DataAnalysis/models/ConvModel{data_set}-{arch}.pth'))
 else:
     model.load_state_dict(torch.load(
-        f'../V{View}DataAnalysis/models/ConvModel{data_set}-{mTL}.pth'))
+        f'../V{View}DataAnalysis/models/ConvModel{data_set}-{arch}-{mTL}.pth'))
 
 # %%
 # For transfer learning model load
