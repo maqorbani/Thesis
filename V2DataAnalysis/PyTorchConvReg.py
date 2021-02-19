@@ -21,7 +21,7 @@ Dictionary = {
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
     'transfer learning': True,  # TL mode
-    '# samples': 25,             # For transfer Learning only
+    '# samples': 100,             # For transfer Learning only
     '# NeighborPx': 1            # For model 3 and 4 px neighborhood
 }
 
@@ -214,8 +214,8 @@ plt.show()
 number = 156
 with torch.no_grad():
     out = model(x_train[number, :, :]).to(
-        "cpu").numpy().reshape(144, -1)+0.01
-    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)+0.01
+        "cpu").numpy().reshape(144, -1)
+    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
@@ -330,4 +330,18 @@ print(sum(test_psnr)/mTest)
 print(f'\nIn {time.time() - a:.2f} Seconds')
 # %%
 
-cv2.imwrite('out.HDR', out)
+
+def revert_HDR(HDR, View):
+    '''
+    HDR is a numpy array with dimensions of 144, 256
+    '''
+    with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
+        minMax = [float(i) for i in f.read().split(', ')]
+    minMax = np.log10(np.array(minMax))
+
+    HDR = HDR * (minMax[1] - minMax[0]) + minMax[0]
+    HDR = np.power(10, HDR)
+    return HDR
+
+
+cv2.imwrite('out.HDR', revert_HDR(out, View))
