@@ -17,10 +17,10 @@ Dictionary = {
     'batch': 8,
     'dataset': '-NM',
     'Model_Arch': 'UNet',
-    'View #': 5,
+    'View #': 2,
     'avg_shuffle': False,        # Shuffle mode
     'avg_division': 50,          # For shuffle mode only
-    'transfer learning': True,  # TL mode
+    'transfer learning': False,  # TL mode
     '# samples': 100,             # For transfer Learning only
     '# NeighborPx': 1            # For model 3 and 4 px neighborhood
 }
@@ -127,6 +127,8 @@ testLoss = []
 
 epochLossBatch = []
 testLossBatch = []
+
+# loss = lambda t, y: criterion(t, y) + 10 * rer_loss(t, y)
 
 # %%
 if Dictionary['avg_shuffle']:
