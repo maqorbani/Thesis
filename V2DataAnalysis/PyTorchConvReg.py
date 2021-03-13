@@ -278,6 +278,9 @@ a = time.time()
 train_loss = []
 test_loss = []
 
+train_illum = []
+test_illum = []
+
 with torch.no_grad():
     for i in range(m):
         target = y_train[i, :].reshape(-1, 1)  # avoiding 1D array
@@ -285,12 +288,14 @@ with torch.no_grad():
         output = model(x).cpu().reshape(-1, 1)
         loss = criterion(output, target)
         train_loss.append(loss.item())
+        train_illum.append(x[-1].mean().item())
     for i in range(mTest):
         target = y_test[i, :].reshape(-1, 1)  # avoiding 1D array
         x = x_test[i, :, :, :]
         output = model(x).cpu().reshape(-1, 1)
         loss = criterion(output, target)
         test_loss.append(loss.item())
+        test_illum.append(x[-1].mean().item())
 
 print(sum(train_loss)/m)
 print(sum(test_loss)/mTest)
@@ -333,17 +338,34 @@ print(f'\nIn {time.time() - a:.2f} Seconds')
 # %%
 
 
-def revert_HDR(HDR, View):
-    '''
-    HDR is a numpy array with dimensions of 144, 256
-    '''
-    with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
-        minMax = [float(i) for i in f.read().split(', ')]
-    minMax = np.log10(np.array(minMax))
-
+def revert_HDR(HDR, minMax):
     HDR = HDR * (minMax[1] - minMax[0]) + minMax[0]
     HDR = np.power(10, HDR)
     return HDR
 
 
-cv2.imwrite('out.HDR', revert_HDR(out, View))
+def predict_HDR_write(x, View, m=None):
+    if m is None:
+        m = x.shape[0]
+
+    if len(x.shape) == 3:  # Check for one sample input
+        x = x.unsqueeze(0)
+
+    key = np.loadtxt('data/key.txt', dtype='str')  # Hour of year for each key
+    selKeys = np.loadtxt(f'data/results{m}.txt')   # K-means selected keys
+    selKeys = [int(i) for i in selKeys]
+
+    with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
+        minMax = [float(i) for i in f.read().split(', ')]
+    minMax = np.log10(np.array(minMax))
+
+    with torch.no_grad():
+        for i in range(x.shape[0]):
+            out = model(x[i]).cpu().numpy().reshape(144, 256)
+            out = revert_HDR(out, minMax)
+            date_time = key[selKeys[i]]
+            cv2.imwrite(f'ab4/{date_time}/{date_time}_2.HDR', out)
+            print(date_time)
+
+
+# cv2.imwrite('out.HDR', revert_HDR(out, minMax))
