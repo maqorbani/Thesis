@@ -2,6 +2,7 @@
 import os
 import numpy as np
 import concurrent.futures
+import matplotlib.pyplot as plt
 
 nCPU = 32
 
@@ -58,3 +59,21 @@ with concurrent.futures.ThreadPoolExecutor() as exec:
            for i in range(nCPU)]
 
 # %%
+np.savetxt('dgp.txt', dgp)
+np.savetxt('Ev.txt', Ev)
+
+# %%
+fig, ax1 = plt.subplots(1, figsize=(10, 10))
+plt.scatter(Ev[:, 0], Ev[:, 1], s=1)
+plt.plot([0, 3000], [0, 3000], c='red')
+plt.xlabel('Ground truth vertical illuminance')
+plt.ylabel('Predicted vertical illuminance')
+
+# %%
+fig, ax1 = plt.subplots(1, figsize=(10, 10))
+plt.plot([0.35, 0.35, 0], [0, 0.35, 0.35], c=(0.5, 0.5, 0.5))
+plt.plot([0.40, 0.40, 0], [0, 0.40, 0.40], c=(0.5, 0.5, 0.5))
+plt.scatter(dgp[:, 0], dgp[:, 1], s=1)
+plt.plot([0, 0.4], [0, 0.4], c='red')
+plt.xlabel('Ground truth DGP')
+plt.ylabel('Predicted DGP')
