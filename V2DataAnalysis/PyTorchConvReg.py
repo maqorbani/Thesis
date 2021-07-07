@@ -526,3 +526,33 @@ with torch.no_grad():
         ax3.imshow(np.abs(out-T), cmap='plasma', vmin=0, vmax=0.9)
         # ax3.title.set_text('difference')
         # plt.savefig(f'../result/False_color/{nu}.png', dpi=100)
+
+# %%
+a = [156, 556, 744, 1032, 2081, 3439, 3573, 3363]
+date = get_date_time(a, m)[0]
+hoy = get_date_time(a, m)[1]
+
+alt = np.loadtxt('data/Altitude.txt')
+azi = np.loadtxt('data/Azimuth.txt') - 180
+dire = np.loadtxt('data/dirRad.txt')
+dif = np.loadtxt('data/difHorRad.txt')
+
+with torch.no_grad():
+    for index, nu in enumerate(a):
+        out = revert_HDR(model(x_train[nu, :, :]).to(
+            "cpu").numpy().reshape(144, -1), get_minMax(View)) * 179
+        T = revert_HDR(y_train[nu, :].to("cpu").numpy().reshape(144, -1),
+                       get_minMax(View)) * 179
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(
+            30, 10), gridspec_kw={'wspace': 0.08, 'hspace': 0})
+        im = ax1.imshow(np.log10(out), cmap='plasma', vmin=0, vmax=4)
+        # ax1.title.set_text(
+        #     f'{date[nu][:-2]}:00\ndirect: {int(dire[hoy[nu]])}' +
+        #     f' wh/m2\ndiffuse: {int(dif[hoy[nu]])} wh/m2\n')
+        ax2.imshow(np.log10(T), cmap='plasma', vmin=0, vmax=4)
+        # ax2.title.set_text('ground_truth')
+        ax3.imshow(np.log10(np.abs(out-T)), cmap='plasma', vmin=0, vmax=4)
+        # ax3.title.set_text('difference')
+        # fig.colorbar(im)
+        # plt.savefig(f'../result/False_color/V2{hoy[index]}.png', dpi=300)
+        print(T.max())
