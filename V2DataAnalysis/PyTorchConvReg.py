@@ -32,6 +32,7 @@ arch = Dictionary['Model_Arch']
 theLoss = True if Dictionary['Loss'] == 'MSE+RER' else False
 divAvg = Dictionary['avg_division']
 pxNeighbor = Dictionary['# NeighborPx']
+blnr = Dictionary['Bilinear']
 
 if arch == 'UNet':
     from unet import UNet as Model              # UNet model
@@ -77,7 +78,8 @@ n_features = x_train.shape[-1] - 1
 m = x_train.shape[0]
 mTest = x_test.shape[0]
 
-modelArgs = [n_features, 1, device] if arch == 'UNet' else [n_features, device]
+modelArgs = [n_features, 1, device, blnr] if arch == 'UNet' \
+    else [n_features, device]
 if arch in (3, 4):
     modelArgs.append(pxNeighbor)
 
@@ -122,6 +124,51 @@ gpu_usage()
 def rer_loss(output, target):
     loss = torch.sqrt(torch.sum((output - target)**2) / torch.sum(target**2))
     return loss
+
+# %%
+
+
+def get_minMax(View):
+    with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
+        minMax = [float(i) for i in f.read().split(', ')]
+    return np.log10(np.array(minMax))
+
+
+def revert_HDR(HDR, minMax):
+    HDR = HDR * (minMax[1] - minMax[0]) + minMax[0]
+    HDR = np.power(10, HDR)
+    return HDR
+
+
+def predict_HDR_write(x, View, m=None):
+    if m is None:
+        m = x.shape[0]
+
+    if len(x.shape) == 3:  # Check for one sample input
+        x = x.unsqueeze(0)
+
+    key = np.loadtxt('data/key.txt', dtype='str')  # Hour of year for each key
+    selKeys = np.loadtxt(f'data/results{m}.txt')   # K-means selected keys
+    selKeys = [int(i) for i in selKeys]
+
+    minMax = get_minMax(View)
+
+    with torch.no_grad():
+        for i in range(x.shape[0]):
+            out = model(x[i]).cpu().numpy().reshape(144, 256)
+            out = revert_HDR(out, minMax)
+            date_time = key[selKeys[i]]
+            cv2.imwrite(f'ab4/{date_time}/{date_time}_2.HDR', out)
+            print(date_time)
+
+
+def get_date_time(index, m):
+    key = np.loadtxt('data/key.txt', dtype='str')   # Hour of year for each key
+    selKeys = np.loadtxt(f'data/results{m}.txt', dtype=int)  # K-means selected
+    return key[selKeys[index]], selKeys[index]
+
+
+# cv2.imwrite('out.HDR', revert_HDR(out, minMax))
 
 
 # %%
@@ -220,19 +267,20 @@ plt.show()
 # model.eval()
 number = 15
 with torch.no_grad():
-    out = model(x_train[number, :, :]).to(
-        "cpu").numpy().reshape(144, -1)
-    T = y_train[number, :].to("cpu").numpy().reshape(144, -1)
+    out = revert_HDR(model(x_train[number, :, :]).to(
+        "cpu").numpy().reshape(144, -1), get_minMax(View)) * 179
+    T = revert_HDR(y_train[number, :].to("cpu").numpy().reshape(144, -1),
+                   get_minMax(View)) * 179
 # plt.imshow((out.to("cpu").detach().numpy().reshape(144, -1)))
 # plt.show()
 
 # Plotting both prediction and target images
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(40, 10))
-im = ax1.imshow(out, cmap='plasma', vmin=0, vmax=0.9)
+im = ax1.imshow(np.log10(out), cmap='plasma', vmin=0, vmax=4)
 ax1.title.set_text(f'{number}\nprediction')
-ax2.imshow(T, cmap='plasma', vmin=0, vmax=0.9)
+ax2.imshow(np.log10(T), cmap='plasma', vmin=0, vmax=4)
 ax2.title.set_text('ground_truth')
-ax3.imshow(np.abs(out-T), cmap='plasma', vmin=0, vmax=0.9)
+ax3.imshow(np.log10(np.abs(out-T)), cmap='plasma', vmin=0, vmax=4)
 ax3.title.set_text('difference')
 
 # fig.colorbar(im, ticks=[0.1, 0.3, 0.5, 0.7, 0.9])
@@ -344,50 +392,6 @@ print(sum(train_psnr)/m)
 print(sum(test_psnr)/mTest)
 
 print(f'\nIn {time.time() - a:.2f} Seconds')
-# %%
-
-
-def get_minMax(View):
-    with open(f'../V{View}DataAnalysis/ab4/min-max.txt', 'r') as f:
-        minMax = [float(i) for i in f.read().split(', ')]
-    return np.log10(np.array(minMax))
-
-
-def revert_HDR(HDR, minMax):
-    HDR = HDR * (minMax[1] - minMax[0]) + minMax[0]
-    HDR = np.power(10, HDR)
-    return HDR
-
-
-def predict_HDR_write(x, View, m=None):
-    if m is None:
-        m = x.shape[0]
-
-    if len(x.shape) == 3:  # Check for one sample input
-        x = x.unsqueeze(0)
-
-    key = np.loadtxt('data/key.txt', dtype='str')  # Hour of year for each key
-    selKeys = np.loadtxt(f'data/results{m}.txt')   # K-means selected keys
-    selKeys = [int(i) for i in selKeys]
-
-    minMax = get_minMax(View)
-
-    with torch.no_grad():
-        for i in range(x.shape[0]):
-            out = model(x[i]).cpu().numpy().reshape(144, 256)
-            out = revert_HDR(out, minMax)
-            date_time = key[selKeys[i]]
-            cv2.imwrite(f'ab4/{date_time}/{date_time}_2.HDR', out)
-            print(date_time)
-
-
-def get_date_time(index, m):
-    key = np.loadtxt('data/key.txt', dtype='str')   # Hour of year for each key
-    selKeys = np.loadtxt(f'data/results{m}.txt', dtype=int)  # K-means selected
-    return key[selKeys[index]]
-
-
-# cv2.imwrite('out.HDR', revert_HDR(out, minMax))
 
 # %%
 
