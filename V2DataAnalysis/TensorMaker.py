@@ -7,12 +7,13 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+from tqdm import tqdm
 
 # %%
 features = {
     "AVGMap": True,
     "STDmap": False,
-    "NormalMap": False,
+    "NormalMap": True,
     "DepthMap": False,
     "ReflectionMap": False,
     "AOmap": False,
@@ -20,7 +21,7 @@ features = {
     "Number of samples": 200,
     "Number of test": 400,
     "Transfer Learning mode": False,
-    "Transfer Learning": [25, 125, 25]  # Transfer learning mode only
+    "Transfer Learning": [10, 20, 25]  # Transfer learning mode only
 }
 
 m = features["Number of samples"]
@@ -114,7 +115,7 @@ def TensorMaker(indices, TheTuple, train_set):
     tnsr[:, :, 0] = np.array(list(range(256))*144)
     tnsr[:, :, 1] = np.array(list(range(144))*256).reshape(256, 144).T.ravel()
 
-    for i, x in enumerate(indices):
+    for i, x in enumerate(tqdm(indices)):
         tnsr[i, :, 2] = alt[x]                                    # altitude
         tnsr[i, :, 3] = azi[x]                                    # azimuth
         tnsr[i, :, 4] = dire[x]                                   # direct
@@ -238,8 +239,17 @@ plt.show()
 test = TensorMaker(choice, TheTuple, False)
 
 # %%
-np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
-                    fileName+'.npz', train=train, test=test)
+if os.path.exists(f'../V{View}DataAnalysis/data/data' + fileName + '.npz'):
+    answer = input(
+        "Are you sure that you want to overwrite the existing file? [yes/any]")
+    if answer == 'yes':
+        np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
+                            fileName + '.npz', train=train, test=test)
+    else:
+        print('The process was canceled.')
+else:
+    np.savez_compressed(f'../V{View}DataAnalysis/data/data' +
+                        fileName + '.npz', train=train, test=test)
 
 # %%
 # TRANSFER LEARNING DATASET CREATOR!
