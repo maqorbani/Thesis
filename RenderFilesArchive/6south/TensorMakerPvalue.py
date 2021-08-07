@@ -24,8 +24,9 @@ for i, HDR in enumerate(HDRs[nCPU * divisionCPU:]):
     HDRsDict['HDR'+str(i)].append(HDR)
 
 badDirs = []
-
 # %%
+
+
 def tensorExtractor(hdrs):
     for hdr in hdrs:
         # print(os.getcwd())

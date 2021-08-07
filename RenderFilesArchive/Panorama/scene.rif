@@ -3,11 +3,12 @@ OCTREE=render.oct
 # Specify an (I)nterior or (E)xterior scene, along with the bounding box of the scene, obtainable via `getbbox scene.rad`
 ZONE=E  0   10  0   7  0    3.5
 # A list of of the rad files which make up our scene
-scene=thesisRoom11_5.rad
+scene=Geo.rad
 # Camera view options
 view=-vp 5.000 3.500 1.200 -vd 0.000 -1 0.000 -vu 0.000 0.000 1.000
 # Option overrides to specify when rendering
 # render=-av 1 1 1
+render=-ab 4
 # Choose how indirect the lighting is
 INDIRECT=2
 # Choose the quality of the image, from LOW, MEDIUM, or HIGH
@@ -15,7 +16,7 @@ QUALITY=HIGH
 # Choose the resolution of mesh detail, from LOW, MEDIUM, or HIGH
 DETAIL=HIGH
 # Choose the light value variance variability, from LOW, MEDIUM, or HIGH
-VARIABILITY=MEDIUM
+VARIABILITY=HIGH
 # Where to output the raw render
 RAWFILE=output_raw.pic
 # Where to output a filtered version of the render (scaled down for antialiasing, exposure correction, etc)
