@@ -1,5 +1,9 @@
-# My Master's Thesis
+# Master's Thesis
 ## "A Deep Convolutional Neural Network Based on U-Net to Predict Annual Luminance Maps"
+
+Mohammad Ali Qorbani, Farhad Dalirani, Mohammad Rahmati, Mohammad Reza Hafezi
+
+Accepted for Publication in the Jounral of Building Performance Simulation.
 
 Studying annual luminance maps during the design process provides architects with insight 
 into the space's spatial quality and occupants' visual comfort. Simulating annual luminance maps 
