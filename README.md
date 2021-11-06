@@ -40,6 +40,8 @@ In this step, annual sky (daylighting) condition is needed. You should extract s
 ### 3.	Sparse samples selection
 Selecting sparse samples throughout the year could be carried out using the k-means.py script provided in the K-means directory.
 
+After this step, the files are ready to be rendered using Radiance. Though, you could use this method on images created by any synthetic image rendering.
+
 ### 4.	Data set generation
 Creating the data set for the neural network training process is done using the TensorMaker.py script provided in V2DataAnalysis directory given the corresponding scene references which should be put in the SceneRefrences directory in their corresponding name. 
 
