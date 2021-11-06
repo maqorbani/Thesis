@@ -47,3 +47,6 @@ Creating the data set for the neural network training process is done using the 
 
 ### 5.	Training the neural network
 The PyTorchConvReg.py script in V2DataAnalysis directory does the neural network training.
+
+The following figure depicts the neural network's architecture used in this method.
+![Architecture2 0_Artboard 1](https://user-images.githubusercontent.com/47574645/140615136-cb565395-6cc1-47c7-9423-5fdab97caad5.png)
