@@ -5,6 +5,10 @@
 
 **Accepted for Publication in the Jounral of Building Performance Simulation.**
 
+Important note: After the publication of this paper, we will release our data set at this repository: https://github.com/maqorbani/DCNU_Lighting. Moreover, we are working on an application with a user-friendly UI to make this method available to architects.
+
+## Abstract
+
 Studying annual luminance maps during the design process provides architects with insight into the space's spatial quality and occupants' visual comfort. Simulating annual luminance maps is computationally expensive, especially if the objective is to render the scene for multiple viewpoints. This repository is a method based on deep learning that accelerates these simulations by predicting the annual luminance maps using only a limited number of rendered high-dynamic-range images. The proposed model predicts HDR images that are comparable to the rendered ones. Using the transfer learning approach, this model can robustly predict HDR images from other viewpoints in the space with less rendered images (up to one-tenth) and less training required. This method was evaluated using various evaluation metrics, such as MSE, RER, PSNR, SSIM, and runtime duration and it shows improvements in all metrics compared to the previous [work](https://arxiv.org/abs/2009.09928), especially 33% better MSE loss, 48% more accurate DGP values, and 50% faster runtime.
 
 ## How it works?
@@ -17,6 +21,9 @@ In a standard image simulation procedure, the rendering program simulates the lu
 3.	Sparse samples selection
 4.	Data set generation
 5.	Training the neural network
+
+An overview of our proposed method is presented in the following figure.
+![Architecture-05](https://user-images.githubusercontent.com/47574645/140614071-b022bf5c-920e-4b72-b90a-8154f1703805.png)
 
 ### 1. Scene modeling
 
@@ -34,7 +41,7 @@ In this step, annual sky (daylighting) condition is needed. You should extract s
 Selecting sparse samples throughout the year could be carried out using the k-means.py script provided in the K-means directory.
 
 ### 4.	Data set generation
-Creating the data set for the neural network training process is done using the TensorMaker.py script provided in V2DataAnalysis directory given the corresponding scene references. 
+Creating the data set for the neural network training process is done using the TensorMaker.py script provided in V2DataAnalysis directory given the corresponding scene references which should be put in the SceneRefrences directory in their corresponding name. 
 
 ### 5.	Training the neural network
 The PyTorchConvReg.py script in V2DataAnalysis directory does the neural network training.
