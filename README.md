@@ -3,9 +3,9 @@
 
 **Mohammad Ali Qorbani, Farhad Dalirani, Mohammad Rahmati, Mohammad Reza Hafezi**
 
-**Accepted for Publication in the Jounral of Building Performance Simulation.**
+[**Link to the paper**](https://www.tandfonline.com/doi/full/10.1080/19401493.2021.2004229)
 
-Important note: After the publication of this paper, we will release our data set at this repository: https://github.com/maqorbani/DCNU_Lighting. Moreover, we are working on an application with a user-friendly UI to make this method available to architects.
+Currently, we are working on an application with a user-friendly UI to make this method available to architects, which will be released at https://github.com/maqorbani/DCNU_Lighting. However, in the meanwhile, you can access our code and dataset in this repository.
 
 ## Abstract
 
@@ -50,3 +50,8 @@ The PyTorchConvReg.py script in V2DataAnalysis directory does the neural network
 
 The following figure depicts the neural network's architecture used in this method.
 ![Architecture2 0_Artboard 1](https://user-images.githubusercontent.com/47574645/140615136-cb565395-6cc1-47c7-9423-5fdab97caad5.png)
+
+## Dataset 
+You can download the dataset [here](https://www.dropbox.com/sh/c5f0kdwsfnv95z7/AAAch4qmi2DISGWJyKTy5PM0a?dl=0)
+
+Additionally, you can create your own dataset to employ this method in order to predict annual luminance maps. The scripts provided in [TheRender folder](https://github.com/maqorbani/Thesis/tree/master/TheRender) will help you achieve this goal. Moreover, using [RadianceEquirectangular](https://github.com/maqorbani/RadianceEquirectangular) repository, you can render equirectangular images using Radiance.
